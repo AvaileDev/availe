@@ -4,6 +4,10 @@ plugins {
     application
 }
 
+kotlin {
+    jvmToolchain(21)
+}
+
 group = "io.availe"
 version = "1.0.0"
 application {
