@@ -20,7 +20,7 @@ dependencies {
     implementation(projects.shared)
     implementation(libs.logback)
     implementation(libs.ktor.server.core)
-    
+
     implementation(libs.ktor.server.cio)
     implementation(libs.ktor.client.core)
     implementation(libs.ktor.client.cio)
@@ -30,4 +30,11 @@ dependencies {
 
     testImplementation(libs.ktor.server.test.host)
     testImplementation(libs.kotlin.test.junit)
+}
+
+tasks.named<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar>("shadowJar") {
+    archiveBaseName.set("server")
+    archiveClassifier.set("all")
+    archiveVersion.set("")
+    mergeServiceFiles()
 }
