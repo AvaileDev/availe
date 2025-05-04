@@ -123,8 +123,8 @@ flyway {
     user = dbUser
     password = dbPass
     schemas = arrayOf(dbSchema)
-    // point at your migration scripts
     locations = arrayOf("filesystem:src/main/resources/db/migration")
+//    cleanDisabled = false
 }
 
 /** ------------- Build hooks & helper tasks ------------- */
