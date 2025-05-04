@@ -123,7 +123,7 @@ flyway {
     user = dbUser
     password = dbPass
     schemas = arrayOf(dbSchema)
-    locations = arrayOf("filesystem:src/main/resources/db/migration")
+    locations = arrayOf("filesystem:${rootProject.projectDir}/src/main/resources/db/migration")
 //    cleanDisabled = false
 }
 
