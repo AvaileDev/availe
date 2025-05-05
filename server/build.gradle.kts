@@ -64,10 +64,9 @@ dependencies {
     implementation(libs.ktor.client.content.negotiation)
     implementation(libs.ktor.serialization.kotlinx.json)
 
-
-
     testImplementation(libs.ktor.server.test.host)
     testImplementation(libs.kotlin.test.junit)
+    testImplementation(libs.postgresql)
 }
 
 /** ------------- jOOQ config ------------- */
@@ -124,20 +123,34 @@ flyway {
     password = dbPass
     schemas = arrayOf(dbSchema)
     locations = arrayOf("filesystem:${rootProject.projectDir}/src/main/resources/db/migration")
-//    cleanDisabled = false
+    cleanDisabled = false
 }
 
 /** ------------- Build hooks & helper tasks ------------- */
-// ensure migrations run before you compile / codegen against the schema
+
+// Always run Flyway before compiling Kotlin and generating jOOQ classes
 tasks.named("compileKotlin") {
     dependsOn("flywayMigrate")
 }
 
-// reset the database if needed
+// Always run Flyway before starting the server
+tasks.named<JavaExec>("run") {
+    dependsOn("flywayMigrate")
+}
+
+
+// Reset the database if needed
 tasks.register("resetDb") {
     group = "database"
     description = "Drops all objects and re-applies all Flyway migrations"
     dependsOn("flywayClean", "flywayMigrate")
+}
+
+// Drop all objects from DB
+tasks.register("clearDb") {
+    group = "database"
+    description = "Drops all objects"
+    dependsOn("flywayClean")
 }
 
 // produce bundled jvm app for docker
