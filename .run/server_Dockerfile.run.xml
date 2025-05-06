@@ -2,8 +2,8 @@
   <configuration default="false" name="server/Dockerfile" type="docker-deploy" factoryName="dockerfile" server-name="Docker">
     <deployment type="dockerfile">
       <settings>
-        <option name="imageTag" value="nvelo-server:latest" />
-        <option name="containerName" value="nvelo-server" />
+        <option name="imageTag" value="availe-server:latest" />
+        <option name="containerName" value="availe-server" />
         <option name="contextFolderPath" value="." />
         <option name="portBindings">
           <list>

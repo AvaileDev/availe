@@ -1,4 +1,4 @@
-package io.nvelo.repositories
+package io.availe.repositories
 
 import org.junit.runner.RunWith
 import org.junit.runners.Suite

@@ -48,7 +48,7 @@ kotlin {
 }
 
 android {
-    namespace = "io.nvelo.shared"
+    namespace = "io.availe.shared"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_21

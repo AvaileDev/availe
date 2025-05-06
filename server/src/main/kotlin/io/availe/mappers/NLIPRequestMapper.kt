@@ -1,17 +1,17 @@
-package io.nvelo.mappers
+package io.availe.mappers
 
-import io.nvelo.jooq.tables.records.NlipRequestRecord
-import io.nvelo.jooq.tables.records.NlipSubmessageRecord
-import io.nvelo.models.NLIPRequest
-import io.nvelo.models.NLIPSubMessage
-import io.nvelo.models.toJsonElement
-import io.nvelo.models.toJsonb
+import io.availe.jooq.tables.records.NlipRequestRecord
+import io.availe.jooq.tables.records.NlipSubmessageRecord
+import io.availe.models.NLIPRequest
+import io.availe.models.NLIPSubMessage
+import io.availe.models.toJsonElement
+import io.availe.models.toJsonb
 import java.util.*
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 import kotlin.uuid.toKotlinUuid
-import io.nvelo.jooq.enums.AllowedFormat as JooqAllowedFormat
-import io.nvelo.models.AllowedFormat as ModelAllowedFormat
+import io.availe.jooq.enums.AllowedFormat as JooqAllowedFormat
+import io.availe.models.AllowedFormat as ModelAllowedFormat
 
 
 @OptIn(ExperimentalUuidApi::class)

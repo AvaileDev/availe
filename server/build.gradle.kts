@@ -42,10 +42,10 @@ kotlin {
     jvmToolchain(21)
 }
 
-group = "io.nvelo"
+group = "io.availe"
 version = "1.0.0"
 application {
-    mainClass.set("io.nvelo.ApplicationKt")
+    mainClass.set("io.availe.ApplicationKt")
     applicationDefaultJvmArgs = listOf("-Dio.ktor.development=${extra["io.ktor.development"] ?: "false"}")
 }
 
@@ -98,7 +98,7 @@ jooq {
                         isRecords = true
                     }
                     target.apply {
-                        packageName = "io.nvelo.jooq"
+                        packageName = "io.availe.jooq"
                         directory = layout.buildDirectory
                             .dir("generated-src/jooq/main")
                             .get()

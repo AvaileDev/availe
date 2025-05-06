@@ -1,4 +1,4 @@
-package io.nvelo.testkit
+package io.availe.testkit
 
 import java.sql.Connection
 import java.sql.DriverManager

@@ -1,9 +1,9 @@
-package io.nvelo.repositories
+package io.availe.repositories
 
-import io.nvelo.jooq.tables.NlipRequest.NLIP_REQUEST
-import io.nvelo.jooq.tables.NlipSubmessage.NLIP_SUBMESSAGE
-import io.nvelo.mappers.NLIPRequestMapper
-import io.nvelo.models.NLIPRequest
+import io.availe.jooq.tables.NlipRequest.NLIP_REQUEST
+import io.availe.jooq.tables.NlipSubmessage.NLIP_SUBMESSAGE
+import io.availe.mappers.NLIPRequestMapper
+import io.availe.models.NLIPRequest
 import org.jooq.DSLContext
 import java.util.UUID
 

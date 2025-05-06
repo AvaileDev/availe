@@ -1,4 +1,4 @@
-package io.nvelo
+package io.availe
 
 class Greeting {
     private val platform = getPlatform()

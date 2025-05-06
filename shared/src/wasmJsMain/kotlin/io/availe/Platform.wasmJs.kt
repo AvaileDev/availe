@@ -1,4 +1,4 @@
-package io.nvelo
+package io.availe
 
 class WasmPlatform: Platform {
     override val name: String = "Web with Kotlin/Wasm"

@@ -1,4 +1,4 @@
-package io.nvelo
+package io.availe
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity

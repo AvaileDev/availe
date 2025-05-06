@@ -1,4 +1,4 @@
-package io.nvelo.models
+package io.availe.models
 
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement

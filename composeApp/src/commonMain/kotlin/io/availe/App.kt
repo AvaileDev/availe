@@ -1,4 +1,4 @@
-package io.nvelo
+package io.availe
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.Image
@@ -13,8 +13,8 @@ import androidx.compose.ui.Modifier
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
-import nvelo.composeapp.generated.resources.Res
-import nvelo.composeapp.generated.resources.compose_multiplatform
+import availe.composeapp.generated.resources.Res
+import availe.composeapp.generated.resources.compose_multiplatform
 
 @Composable
 @Preview
