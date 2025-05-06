@@ -1,4 +1,4 @@
-package io.availe
+package io.nvelo
 
 import platform.UIKit.UIDevice
 

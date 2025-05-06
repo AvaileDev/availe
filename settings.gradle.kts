@@ -1,4 +1,4 @@
-rootProject.name = "availe"
+rootProject.name = "nvelo"
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 
 pluginManagement {

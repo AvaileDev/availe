@@ -1,4 +1,4 @@
-package io.availe.testkit
+package io.nvelo.testkit
 
 import org.junit.Before
 import org.junit.After

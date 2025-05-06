@@ -1,4 +1,4 @@
-package io.availe
+package io.nvelo
 
 class JVMPlatform: Platform {
     override val name: String = "Java ${System.getProperty("java.version")}"

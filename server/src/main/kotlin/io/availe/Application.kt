@@ -1,6 +1,6 @@
-package io.availe
+package io.nvelo
 
-import io.availe.client.OllamaClient
+import io.nvelo.client.OllamaClient
 import io.ktor.client.*
 import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.application.*

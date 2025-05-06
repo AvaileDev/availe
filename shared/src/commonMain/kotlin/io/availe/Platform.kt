@@ -1,4 +1,4 @@
-package io.availe
+package io.nvelo
 
 interface Platform {
     val name: String

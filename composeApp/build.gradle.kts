@@ -78,11 +78,11 @@ kotlin {
 }
 
 android {
-    namespace = "io.availe"
+    namespace = "io.nvelo"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
 
     defaultConfig {
-        applicationId = "io.availe"
+        applicationId = "io.nvelo"
         minSdk = libs.versions.android.minSdk.get().toInt()
         targetSdk = libs.versions.android.targetSdk.get().toInt()
         versionCode = 1
@@ -110,11 +110,11 @@ dependencies {
 
 compose.desktop {
     application {
-        mainClass = "io.availe.MainKt"
+        mainClass = "io.nvelo.MainKt"
 
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
-            packageName = "io.availe"
+            packageName = "io.nvelo"
             packageVersion = "1.0.0"
         }
     }

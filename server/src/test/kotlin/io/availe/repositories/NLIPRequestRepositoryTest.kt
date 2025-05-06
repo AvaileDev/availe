@@ -1,9 +1,9 @@
-package io.availe.repositories
+package io.nvelo.repositories
 
-import io.availe.testkit.BaseRepositoryTest
-import io.availe.models.NLIPRequest
-import io.availe.models.NLIPSubMessage
-import io.availe.models.AllowedFormat
+import io.nvelo.testkit.BaseRepositoryTest
+import io.nvelo.models.NLIPRequest
+import io.nvelo.models.NLIPSubMessage
+import io.nvelo.models.AllowedFormat
 import kotlinx.serialization.json.JsonPrimitive
 import org.junit.Test
 import kotlin.test.assertEquals

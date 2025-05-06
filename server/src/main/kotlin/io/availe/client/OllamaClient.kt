@@ -1,6 +1,6 @@
-package io.availe.client
+package io.nvelo.client
 
-import io.availe.models.OllamaModelQuery
+import io.nvelo.models.OllamaModelQuery
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.request.*
