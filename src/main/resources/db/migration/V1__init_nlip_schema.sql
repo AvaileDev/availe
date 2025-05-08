@@ -1,30 +1,34 @@
-create type allowed_format as enum (
-    'text',
-    'token',
-    'structured',
-    'binary',
-    'location',
-    'generic'
-    );
-
-create table nlip_request
-(
-    uuid       uuid primary key,
-    control    boolean        not null,
-    format     allowed_format not null,
-    subformat  text           not null,
-    content    jsonb          not null,
-    created_at timestamptz    not null default now()
+CREATE TYPE allowed_format AS ENUM (
+  'text',
+  'token',
+  'structured',
+  'binary',
+  'location',
+  'generic'
 );
 
-create table nlip_submessage
-(
-    id           serial primary key,
-    request_uuid uuid           not null references nlip_request (uuid) on delete cascade,
-    format       allowed_format not null,
-    subformat    text           not null,
-    content      jsonb          not null
+CREATE TYPE message_type AS ENUM (
+  'control'
 );
 
-create index idx_nlip_request_format on nlip_request (format);
-create index idx_nlip_submessage_request on nlip_submessage (request_uuid);
+CREATE TABLE nlip_request
+(
+    uuid        UUID PRIMARY KEY,
+    messagetype MESSAGE_TYPE,
+    format      allowed_format NOT NULL,
+    subformat   TEXT           NOT NULL,
+    content     JSONB          NOT NULL
+);
+
+CREATE TABLE nlip_submessage
+(
+    id           SERIAL PRIMARY KEY,
+    request_uuid UUID REFERENCES nlip_request (uuid) ON DELETE CASCADE,
+    format       allowed_format NOT NULL,
+    subformat    TEXT           NOT NULL,
+    content      JSONB          NOT NULL,
+    label        TEXT
+);
+
+CREATE INDEX idx_nlip_request_format ON nlip_request (format);
+CREATE INDEX idx_nlip_submessage_request ON nlip_submessage (request_uuid);

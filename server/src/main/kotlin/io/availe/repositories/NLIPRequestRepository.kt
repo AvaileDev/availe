@@ -3,7 +3,7 @@ package io.availe.repositories
 import io.availe.jooq.tables.NlipRequest.NLIP_REQUEST
 import io.availe.jooq.tables.NlipSubmessage.NLIP_SUBMESSAGE
 import io.availe.mappers.NLIPRequestMapper
-import io.availe.models.NLIPRequest
+import io.availe.openapi.model.NLIPRequest
 import org.jooq.DSLContext
 import java.util.UUID
 
