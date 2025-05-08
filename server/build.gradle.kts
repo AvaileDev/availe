@@ -1,5 +1,4 @@
 import nu.studer.gradle.jooq.JooqEdition
-import org.gradle.api.internal.tasks.testing.report.DefaultTestReport.generator
 import org.jooq.meta.jaxb.Logging
 
 
