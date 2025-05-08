@@ -56,9 +56,7 @@ components:
         subformat:
           type: string
         content:
-          oneOf:
-            - type: string
-            - type: object
+          type: string
         label:
           type: string
     NLIPRequest:
@@ -81,9 +79,7 @@ components:
         subformat:
           type: string
         content:
-          oneOf:
-            - type: string
-            - type: object
+          type: string
         submessages:
           type: array
           items:

@@ -2,10 +2,8 @@ package io.availe.mappers
 
 import io.availe.jooq.tables.records.NlipRequestRecord
 import io.availe.jooq.tables.records.NlipSubmessageRecord
-import io.availe.models.createNLIPContent
-import io.availe.models.getJsonElement
-import io.availe.models.toContentJsonb
-import io.availe.models.toNLIPContent
+import io.availe.models.toJsonb
+import io.availe.models.toObject
 import io.availe.openapi.model.NLIPRequest
 import io.availe.openapi.model.NLIPSubMessage
 import java.util.*
@@ -21,7 +19,7 @@ object NLIPRequestMapper {
             messagetype = dto.messagetype?.let { JooqMessageType.valueOf(it.value) }
             format = JooqAllowedFormat.valueOf(dto.format.value)
             subformat = dto.subformat
-            content = dto.content.toContentJsonb()
+            content = dto.content.toJsonb()
             uuid = dto.uuid
         }
 
@@ -30,7 +28,7 @@ object NLIPRequestMapper {
                 requestUuid = dto.uuid
                 format = JooqAllowedFormat.valueOf(submessage.format.value)
                 subformat = submessage.subformat
-                content = submessage.content.toContentJsonb()
+                content = submessage.content.toJsonb()
                 label = submessage.label
             }
         } ?: emptyList()
@@ -47,12 +45,12 @@ object NLIPRequestMapper {
         messagetype = parent.messagetype?.let { NLIPRequest.Messagetype.valueOf(it.name) },
         format = ModelAllowedFormat.valueOf(parent.format.name),
         subformat = parent.subformat,
-        content = parent.content.toNLIPContent(),
+        content = parent.content.toObject<String>(),
         submessages = children.map {
             NLIPSubMessage(
                 format = ModelAllowedFormat.valueOf(it.format.name),
                 subformat = it.subformat,
-                content = it.content.toNLIPContent(),
+                content = it.content.toObject<String>(),
                 label = it.label
             )
         }

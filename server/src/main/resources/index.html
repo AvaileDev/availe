@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>NLIP quick-test</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            max-width: 600px;
+            margin: 2rem auto;
+        }
+
+        #reply {
+            white-space: pre-wrap;
+            border: 1px solid #ccc;
+            padding: 1rem;
+            margin-top: 1rem;
+        }
+    </style>
+</head>
+<body>
+<h1>NLIP quick-test</h1>
+<input autofocus id="prompt" placeholder="Type a message…" size="50">
+<button id="send">Send</button>
+<div id="reply"></div>
+<script>
+    const promptEl = document.getElementById('prompt');
+    const replyEl = document.getElementById('reply');
+    document.getElementById('send').addEventListener('click', async () => {
+        const q = promptEl.value.trim();
+        if (!q) return;
+        replyEl.textContent = 'Loading…';
+        try {
+            const res = await fetch('/chat?q=' + encodeURIComponent(q));
+            if (!res.ok) throw new Error(res.status + ' ' + res.statusText);
+            replyEl.textContent = await res.text();
+        } catch (e) {
+            replyEl.textContent = 'Error: ' + e;
+        }
+    });
+    promptEl.addEventListener('keydown', e => {
+        if (e.key === 'Enter') document.getElementById('send').click();
+    });
+</script>
+</body>
+</html>

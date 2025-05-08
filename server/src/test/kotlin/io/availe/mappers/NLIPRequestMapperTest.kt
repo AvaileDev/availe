@@ -2,121 +2,205 @@ package io.availe.mappers
 
 import io.availe.jooq.enums.AllowedFormat as JooqAllowedFormat
 import io.availe.jooq.enums.MessageType as JooqMessageType
-import io.availe.models.createNLIPContent
-import io.availe.openapi.model.AllowedFormat
+import io.availe.openapi.model.AllowedFormat as ModelAllowedFormat
 import io.availe.openapi.model.NLIPRequest
 import io.availe.openapi.model.NLIPSubMessage
-import kotlinx.serialization.json.JsonPrimitive
+import org.jooq.JSONB
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Test
 import java.util.UUID
-import kotlin.test.assertEquals
-import kotlin.test.assertNotNull
 
 class NLIPRequestMapperTest {
 
     @Test
-    fun `test toRecords and fromRecords with simple request`() {
-        // Create a simple NLIPRequest
+    fun `test toRecords with submessages`() {
+        // Arrange
         val uuid = UUID.randomUUID()
-        val content = createNLIPContent(JsonPrimitive("Hello, world!"))
         val request = NLIPRequest(
             uuid = uuid,
             messagetype = NLIPRequest.Messagetype.control,
-            format = AllowedFormat.text,
+            format = ModelAllowedFormat.text,
             subformat = "plain",
-            content = content,
-            submessages = null
+            content = "Hello, world!",
+            submessages = listOf(
+                NLIPSubMessage(
+                    format = ModelAllowedFormat.structured,
+                    subformat = "json",
+                    content = """{"greeting": "Hello"}""",
+                    label = "metadata"
+                ),
+                NLIPSubMessage(
+                    format = ModelAllowedFormat.binary,
+                    subformat = "image",
+                    content = "base64data",
+                    label = null
+                )
+            )
         )
 
-        // Convert to records
+        // Act
         val (parent, children) = NLIPRequestMapper.toRecords(request)
 
-        // Verify parent record
+        // Assert
         assertEquals(uuid, parent.uuid)
         assertEquals(JooqMessageType.control, parent.messagetype)
         assertEquals(JooqAllowedFormat.text, parent.format)
         assertEquals("plain", parent.subformat)
-        assertNotNull(parent.content)
+        assertEquals("\"Hello, world!\"", parent.content.data())
 
-        // Verify children records
-        assertEquals(0, children.size)
+        assertEquals(2, children.size)
 
-        // Convert back to NLIPRequest
-        val reconstructed = NLIPRequestMapper.fromRecords(parent, children)
+        val firstChild = children[0]
+        assertEquals(uuid, firstChild.requestUuid)
+        assertEquals(JooqAllowedFormat.structured, firstChild.format)
+        assertEquals("json", firstChild.subformat)
+        assertEquals(""""{\"greeting\": \"Hello\"}"""", firstChild.content.data())
+        assertEquals("metadata", firstChild.label)
 
-        // Verify reconstructed request
-        assertEquals(uuid, reconstructed.uuid)
-        assertEquals(NLIPRequest.Messagetype.control, reconstructed.messagetype)
-        assertEquals(AllowedFormat.text, reconstructed.format)
-        assertEquals("plain", reconstructed.subformat)
-        assertNotNull(reconstructed.content)
-        assertEquals(0, reconstructed.submessages?.size ?: 0)
+        val secondChild = children[1]
+        assertEquals(uuid, secondChild.requestUuid)
+        assertEquals(JooqAllowedFormat.binary, secondChild.format)
+        assertEquals("image", secondChild.subformat)
+        assertEquals("\"base64data\"", secondChild.content.data())
+        assertNull(secondChild.label)
     }
 
     @Test
-    fun `test toRecords and fromRecords with submessages`() {
-        // Create a NLIPRequest with submessages
+    fun `test toRecords without submessages`() {
+        // Arrange
         val uuid = UUID.randomUUID()
-        val content = createNLIPContent(JsonPrimitive("Main content"))
-        val submessage1 = NLIPSubMessage(
-            format = AllowedFormat.text,
-            subformat = "plain",
-            content = createNLIPContent(JsonPrimitive("Submessage 1")),
-            label = "label1"
-        )
-        val submessage2 = NLIPSubMessage(
-            format = AllowedFormat.token,
-            subformat = "embedding",
-            content = createNLIPContent(JsonPrimitive("Submessage 2")),
-            label = null
-        )
         val request = NLIPRequest(
             uuid = uuid,
-            messagetype = NLIPRequest.Messagetype.control,
-            format = AllowedFormat.structured,
-            subformat = "json",
-            content = content,
-            submessages = listOf(submessage1, submessage2)
+            messagetype = null,
+            format = ModelAllowedFormat.token,
+            subformat = "embedding",
+            content = "token data",
+            submessages = null
         )
 
-        // Convert to records
+        // Act
         val (parent, children) = NLIPRequestMapper.toRecords(request)
 
-        // Verify parent record
+        // Assert
         assertEquals(uuid, parent.uuid)
-        assertEquals(JooqMessageType.control, parent.messagetype)
-        assertEquals(JooqAllowedFormat.structured, parent.format)
-        assertEquals("json", parent.subformat)
-        assertNotNull(parent.content)
+        assertNull(parent.messagetype)
+        assertEquals(JooqAllowedFormat.token, parent.format)
+        assertEquals("embedding", parent.subformat)
+        assertEquals("\"token data\"", parent.content.data())
+        assertEquals(0, children.size)
+    }
 
-        // Verify children records
-        assertEquals(2, children.size)
-        assertEquals(JooqAllowedFormat.text, children[0].format)
-        assertEquals("plain", children[0].subformat)
-        assertNotNull(children[0].content)
-        assertEquals("label1", children[0].label)
-        assertEquals(JooqAllowedFormat.token, children[1].format)
-        assertEquals("embedding", children[1].subformat)
-        assertNotNull(children[1].content)
-        assertEquals(null, children[1].label)
+    @Test
+    fun `test fromRecords with submessages`() {
+        // Arrange
+        val uuid = UUID.randomUUID()
+        val parent = createNlipRequestRecord(
+            uuid = uuid,
+            messagetype = JooqMessageType.control,
+            format = JooqAllowedFormat.text,
+            subformat = "plain",
+            content = "Hello, world!"
+        )
 
-        // Convert back to NLIPRequest
-        val reconstructed = NLIPRequestMapper.fromRecords(parent, children)
+        val children = listOf(
+            createNlipSubmessageRecord(
+                requestUuid = uuid,
+                format = JooqAllowedFormat.structured,
+                subformat = "json",
+                content = """{"greeting": "Hello"}""",
+                label = "metadata"
+            ),
+            createNlipSubmessageRecord(
+                requestUuid = uuid,
+                format = JooqAllowedFormat.binary,
+                subformat = "image",
+                content = "base64data",
+                label = null
+            )
+        )
 
-        // Verify reconstructed request
-        assertEquals(uuid, reconstructed.uuid)
-        assertEquals(NLIPRequest.Messagetype.control, reconstructed.messagetype)
-        assertEquals(AllowedFormat.structured, reconstructed.format)
-        assertEquals("json", reconstructed.subformat)
-        assertNotNull(reconstructed.content)
-        assertEquals(2, reconstructed.submessages?.size)
-        assertEquals(AllowedFormat.text, reconstructed.submessages?.get(0)?.format)
-        assertEquals("plain", reconstructed.submessages?.get(0)?.subformat)
-        assertNotNull(reconstructed.submessages?.get(0)?.content)
-        assertEquals("label1", reconstructed.submessages?.get(0)?.label)
-        assertEquals(AllowedFormat.token, reconstructed.submessages?.get(1)?.format)
-        assertEquals("embedding", reconstructed.submessages?.get(1)?.subformat)
-        assertNotNull(reconstructed.submessages?.get(1)?.content)
-        assertEquals(null, reconstructed.submessages?.get(1)?.label)
+        // Act
+        val result = NLIPRequestMapper.fromRecords(parent, children)
+
+        // Assert
+        assertEquals(uuid, result.uuid)
+        assertEquals(NLIPRequest.Messagetype.control, result.messagetype)
+        assertEquals(ModelAllowedFormat.text, result.format)
+        assertEquals("plain", result.subformat)
+        assertEquals("Hello, world!", result.content)
+
+        assertEquals(2, result.submessages?.size)
+
+        val firstSubmessage = result.submessages?.get(0)
+        assertEquals(ModelAllowedFormat.structured, firstSubmessage?.format)
+        assertEquals("json", firstSubmessage?.subformat)
+        assertEquals("""{"greeting": "Hello"}""", firstSubmessage?.content)
+        assertEquals("metadata", firstSubmessage?.label)
+
+        val secondSubmessage = result.submessages?.get(1)
+        assertEquals(ModelAllowedFormat.binary, secondSubmessage?.format)
+        assertEquals("image", secondSubmessage?.subformat)
+        assertEquals("base64data", secondSubmessage?.content)
+        assertNull(secondSubmessage?.label)
+    }
+
+    @Test
+    fun `test fromRecords without submessages`() {
+        // Arrange
+        val uuid = UUID.randomUUID()
+        val parent = createNlipRequestRecord(
+            uuid = uuid,
+            messagetype = null,
+            format = JooqAllowedFormat.token,
+            subformat = "embedding",
+            content = "token data"
+        )
+
+        val children = emptyList<io.availe.jooq.tables.records.NlipSubmessageRecord>()
+
+        // Act
+        val result = NLIPRequestMapper.fromRecords(parent, children)
+
+        // Assert
+        assertEquals(uuid, result.uuid)
+        assertNull(result.messagetype)
+        assertEquals(ModelAllowedFormat.token, result.format)
+        assertEquals("embedding", result.subformat)
+        assertEquals("token data", result.content)
+        assertEquals(0, result.submessages?.size)
+    }
+
+    // Helper methods to create test records
+    private fun createNlipRequestRecord(
+        uuid: UUID,
+        messagetype: JooqMessageType?,
+        format: JooqAllowedFormat,
+        subformat: String,
+        content: String
+    ): io.availe.jooq.tables.records.NlipRequestRecord {
+        val record = io.availe.jooq.tables.records.NlipRequestRecord()
+        record.uuid = uuid
+        record.messagetype = messagetype
+        record.format = format
+        record.subformat = subformat
+        record.content = JSONB.valueOf("\"" + content.replace("\"", "\\\"") + "\"")
+        return record
+    }
+
+    private fun createNlipSubmessageRecord(
+        requestUuid: UUID,
+        format: JooqAllowedFormat,
+        subformat: String,
+        content: String,
+        label: String?
+    ): io.availe.jooq.tables.records.NlipSubmessageRecord {
+        val record = io.availe.jooq.tables.records.NlipSubmessageRecord()
+        record.requestUuid = requestUuid
+        record.format = format
+        record.subformat = subformat
+        record.content = JSONB.valueOf("\"" + content.replace("\"", "\\\"") + "\"")
+        record.label = label
+        return record
     }
 }

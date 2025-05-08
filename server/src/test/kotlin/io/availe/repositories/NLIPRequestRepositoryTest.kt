@@ -1,92 +1,114 @@
 package io.availe.repositories
 
-import io.availe.testkit.BaseRepositoryTest
-import io.availe.models.createNLIPContent
 import io.availe.openapi.model.AllowedFormat
 import io.availe.openapi.model.NLIPRequest
 import io.availe.openapi.model.NLIPSubMessage
-import kotlinx.serialization.json.JsonPrimitive
+import io.availe.testkit.BaseRepositoryTest
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertNotNull
-import kotlin.test.assertNull
 import java.util.UUID
 
-// Helper function to create a simple request for testing
-fun createSimpleRequest(uuid: UUID = UUID.randomUUID()) = NLIPRequest(
-    uuid = uuid,
-    format = AllowedFormat.text,
-    subformat = "plain",
-    content = createNLIPContent(JsonPrimitive("Hello, world!")),
-    messagetype = null,
-    submessages = null
-)
+class NLIPRequestRepositoryTest : BaseRepositoryTest() {
 
-class SaveAndFindRequestTest : BaseRepositoryTest() {
-    @Test
-    fun `saving a request then finding by UUID returns the same request`() {
-        db.tx {
-            val repo = NLIPRequestRepository(this)
-            val uuid = UUID.randomUUID()
-            val request = createSimpleRequest(uuid)
+    private lateinit var repository: NLIPRequestRepository
 
-            repo.save(request)
-            val found = repo.find(uuid)
-
-            assertNotNull(found)
-            assertEquals(uuid, found.uuid)
-        }
+    @org.junit.Before
+    fun initRepository() {
+        repository = NLIPRequestRepository(db.dsl)
     }
-}
 
-class SaveAndFindRequestWithSubmessagesTest : BaseRepositoryTest() {
     @Test
-    fun `saving and finding a request with submessages works`() {
+    fun `test save and find request with submessages`() {
+        // Arrange
+        val uuid = UUID.randomUUID()
+        val request = NLIPRequest(
+            uuid = uuid,
+            messagetype = NLIPRequest.Messagetype.control,
+            format = AllowedFormat.text,
+            subformat = "plain",
+            content = "Hello, world!",
+            submessages = listOf(
+                NLIPSubMessage(
+                    format = AllowedFormat.structured,
+                    subformat = "json",
+                    content = """{"greeting": "Hello"}""",
+                    label = "metadata"
+                ),
+                NLIPSubMessage(
+                    format = AllowedFormat.binary,
+                    subformat = "image",
+                    content = "base64data",
+                    label = null
+                )
+            )
+        )
+
+        // Act
         db.tx {
-            val repo = NLIPRequestRepository(this)
-            val uuid = UUID.randomUUID()
-
-            val submessage1 = NLIPSubMessage(
-                format = AllowedFormat.text,
-                subformat = "plain",
-                content = createNLIPContent(JsonPrimitive("Submessage 1")),
-                label = "label1"
-            )
-
-            val submessage2 = NLIPSubMessage(
-                format = AllowedFormat.token,
-                subformat = "embedding",
-                content = createNLIPContent(JsonPrimitive("Submessage 2")),
-                label = null
-            )
-
-            val request = NLIPRequest(
-                uuid = uuid,
-                messagetype = NLIPRequest.Messagetype.control,
-                format = AllowedFormat.structured,
-                subformat = "json",
-                content = createNLIPContent(JsonPrimitive("Main content")),
-                submessages = listOf(submessage1, submessage2)
-            )
-
-            repo.save(request)
-            val found = repo.find(uuid)
-
-            assertNotNull(found)
-            assertEquals(uuid, found.uuid)
-            assertEquals(2, found.submessages?.size)
+            repository.save(request)
         }
+        val result = repository.find(uuid)
+
+        // Assert
+        assertEquals(uuid, result?.uuid)
+        assertEquals(NLIPRequest.Messagetype.control, result?.messagetype)
+        assertEquals(AllowedFormat.text, result?.format)
+        assertEquals("plain", result?.subformat)
+        assertEquals("Hello, world!", result?.content)
+
+        assertEquals(2, result?.submessages?.size)
+
+        val firstSubmessage = result?.submessages?.get(0)
+        assertEquals(AllowedFormat.structured, firstSubmessage?.format)
+        assertEquals("json", firstSubmessage?.subformat)
+        assertEquals("""{"greeting": "Hello"}""", firstSubmessage?.content)
+        assertEquals("metadata", firstSubmessage?.label)
+
+        val secondSubmessage = result?.submessages?.get(1)
+        assertEquals(AllowedFormat.binary, secondSubmessage?.format)
+        assertEquals("image", secondSubmessage?.subformat)
+        assertEquals("base64data", secondSubmessage?.content)
+        assertNull(secondSubmessage?.label)
     }
-}
 
-class FindNonExistentRequestTest : BaseRepositoryTest() {
     @Test
-    fun `finding a non-existent UUID returns null`() {
+    fun `test save and find request without submessages`() {
+        // Arrange
+        val uuid = UUID.randomUUID()
+        val request = NLIPRequest(
+            uuid = uuid,
+            messagetype = null,
+            format = AllowedFormat.token,
+            subformat = "embedding",
+            content = "token data",
+            submessages = null
+        )
+
+        // Act
         db.tx {
-            val repo = NLIPRequestRepository(this)
-            val nonExistent = UUID.randomUUID()
-            val found = repo.find(nonExistent)
-            assertNull(found)
+            repository.save(request)
         }
+        val result = repository.find(uuid)
+
+        // Assert
+        assertEquals(uuid, result?.uuid)
+        assertNull(result?.messagetype)
+        assertEquals(AllowedFormat.token, result?.format)
+        assertEquals("embedding", result?.subformat)
+        assertEquals("token data", result?.content)
+        assertEquals(0, result?.submessages?.size)
+    }
+
+    @Test
+    fun `test find non-existent request`() {
+        // Arrange
+        val uuid = UUID.randomUUID()
+
+        // Act
+        val result = repository.find(uuid)
+
+        // Assert
+        assertNull(result)
     }
 }
