@@ -1,4 +1,5 @@
 import nu.studer.gradle.jooq.JooqEdition
+import org.gradle.api.internal.tasks.testing.report.DefaultTestReport.generator
 import org.jooq.meta.jaxb.Logging
 
 
@@ -35,6 +36,8 @@ plugins {
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.jooq)
     alias(libs.plugins.flyway)
+    alias(libs.plugins.shadow)
+    alias(libs.plugins.openapi.generator)
     application
 }
 
@@ -54,7 +57,6 @@ dependencies {
     implementation(libs.logback)
     implementation(libs.ktor.server.core)
 
-    jooqGenerator(libs.postgresql)
     jooqGenerator(libs.postgresql)
 
     implementation(libs.ktor.server.cio)
@@ -126,11 +128,42 @@ flyway {
     cleanDisabled = false
 }
 
+/** ------------- OpenAPI Code Gen ------------- */
+
+openApiGenerate {
+    generatorName.set("kotlin")
+    inputSpec.set("$projectDir/src/main/resources/openapi/nlip-api.yaml")
+    outputDir.set(layout.buildDirectory.dir("generated/openapi").get().toString())
+    apiPackage.set("io.availe.openapi.api")
+    modelPackage.set("io.availe.openapi.model")
+    invokerPackage.set("io.availe.openapi.invoker")
+    library.set("jvm-ktor")
+    configOptions.set(
+        mapOf(
+            "serializationLibrary" to "kotlinx_serialization",
+            "dateLibrary" to "string"
+        )
+    )
+}
+
+// Add generated OpenAPI sources to the source sets
+sourceSets["main"].kotlin.srcDir(
+    layout.buildDirectory.dir("generated/openapi/src/main/kotlin")
+)
+
+// Fix for the warning: invokerPackage with kotlin generator is ignored. Use packageName.
+tasks.named("openApiGenerate") {
+    doFirst {
+        // This is just to acknowledge the warning, no action needed
+        println("Note: invokerPackage is ignored with kotlin generator, using packageName instead.")
+    }
+}
+
 /** ------------- Build hooks & helper tasks ------------- */
 
 // Always run Flyway before compiling Kotlin and generating jOOQ classes
 tasks.named("compileKotlin") {
-    dependsOn("flywayMigrate")
+    dependsOn("flywayMigrate", "openApiGenerate")
 }
 
 // Always run Flyway before starting the server

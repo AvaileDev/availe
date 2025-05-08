@@ -1,0 +1,90 @@
+openapi: 3.1.0
+info:
+  title: NLIP API
+  version: "1.0.0"
+servers:
+  - url: http://localhost:8004/nlip
+paths:
+  /ping:
+    get:
+      summary: health
+      operationId: pingNLIP
+      responses:
+        "200":
+          description: pong
+          content:
+            text/plain:
+              schema:
+                type: string
+  /chat:
+    get:
+      summary: relay chat
+      operationId: chatNLIP
+      parameters:
+        - name: q
+          in: query
+          schema:
+            type: string
+          required: false
+      responses:
+        "200":
+          description: reply
+          content:
+            text/plain:
+              schema:
+                type: string
+components:
+  schemas:
+    AllowedFormat:
+      type: string
+      enum:
+        - text
+        - token
+        - structured
+        - binary
+        - location
+        - generic
+    NLIPSubMessage:
+      type: object
+      required:
+        - format
+        - subformat
+        - content
+      properties:
+        format:
+          $ref: "#/components/schemas/AllowedFormat"
+        subformat:
+          type: string
+        content:
+          oneOf:
+            - type: string
+            - type: object
+        label:
+          type: string
+    NLIPRequest:
+      type: object
+      required:
+        - uuid
+        - format
+        - subformat
+        - content
+      properties:
+        uuid:
+          type: string
+          format: uuid
+        messagetype:
+          type: string
+          enum:
+            - control
+        format:
+          $ref: "#/components/schemas/AllowedFormat"
+        subformat:
+          type: string
+        content:
+          oneOf:
+            - type: string
+            - type: object
+        submessages:
+          type: array
+          items:
+            $ref: "#/components/schemas/NLIPSubMessage"
