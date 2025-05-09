@@ -4,6 +4,7 @@ androidx-activityCompose = "1.11.0-rc01"
 androidx-lifecycle = "2.9.0-beta01"
 benManesVersions = "0.52.0"
 compose-multiplatform = "1.8.0"
+fastscrollerCore = "0.3.2"
 flyway = "11.8.1"
 flywayDatabasePostgresql = "11.8.1"
 jooq-plugin = "10.1"
@@ -24,6 +25,9 @@ android-targetSdk = "34"
 androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "androidx-activityCompose" }
 androidx-lifecycle-runtime-compose = { module = "org.jetbrains.androidx.lifecycle:lifecycle-runtime-compose", version.ref = "androidx-lifecycle" }
 androidx-lifecycle-viewmodel = { module = "org.jetbrains.androidx.lifecycle:lifecycle-viewmodel", version.ref = "androidx-lifecycle" }
+fastscroller-core = { module = "io.github.oikvpqya.compose.fastscroller:fastscroller-core", version.ref = "fastscrollerCore" }
+fastscroller-indicator = { module = "io.github.oikvpqya.compose.fastscroller:fastscroller-indicator", version.ref = "fastscrollerCore" }
+fastscroller-material3 = { module = "io.github.oikvpqya.compose.fastscroller:fastscroller-material3", version.ref = "fastscrollerCore" }
 flyway-database-postgresql = { module = "org.flywaydb:flyway-database-postgresql", version.ref = "flywayDatabasePostgresql" }
 kotlin-test-junit = "org.jetbrains.kotlin:kotlin-test-junit:2.1.20"
 kotlinx-coroutines-swing = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-swing", version.ref = "kotlinx-coroutines" }

@@ -14,3 +14,10 @@ plugins {
 subprojects {
     apply(plugin = "com.github.ben-manes.versions")
 }
+
+tasks.register("checkDependencyUpdates") {
+    group = "versioning"
+    description = "Checks for dependency updates (does not apply them)."
+
+    dependsOn(":dependencyUpdates")
+}
