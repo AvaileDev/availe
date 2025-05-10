@@ -20,6 +20,7 @@ version-catalog-update = "1.0.0"
 android-compileSdk = "34"
 android-minSdk = "21"
 android-targetSdk = "34"
+compose-hot-reload = "1.0.0-alpha09"
 
 [libraries]
 androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "androidx-activityCompose" }
@@ -57,3 +58,4 @@ openapi-generator = { id = "org.openapi.generator", version.ref = "openapi-gener
 shadow = { id = "com.gradleup.shadow", version.ref = "shadow" }
 versionCatalogUpdate = { id = "nl.littlerobots.version-catalog-update", version.ref = "version-catalog-update" }
 versions = { id = "com.github.ben-manes.versions", version.ref = "benManesVersions" }
+composeHotReload = { id = "org.jetbrains.compose.hot-reload", version.ref = "compose-hot-reload" }

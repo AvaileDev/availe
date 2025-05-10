@@ -12,7 +12,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import io.availe.util.getScreenWidthDp
 import io.github.oikvpqya.compose.fastscroller.VerticalScrollbar
 import io.github.oikvpqya.compose.fastscroller.material3.defaultMaterialScrollbarStyle
 import io.github.oikvpqya.compose.fastscroller.rememberScrollbarAdapter
@@ -28,14 +27,6 @@ private val max_height = 400.dp
  */
 @Composable
 fun ChatInputField(modifier: Modifier = Modifier) {
-    val screenWidth: Dp = getScreenWidthDp()
-
-    val responsiveWidth: Float = when {
-        screenWidth < 600.dp -> .9f
-        screenWidth < 840.dp -> .7f
-        else -> .5f
-    }
-
     var textState by remember { mutableStateOf("") }
     val scrollState = rememberScrollState()
     var textFieldHeight by remember { mutableStateOf(min_height) }
@@ -44,7 +35,6 @@ fun ChatInputField(modifier: Modifier = Modifier) {
 
     Box(
         modifier
-            .fillMaxWidth(responsiveWidth)
             .heightIn(min = min_height, max = max_height)
             .height(textFieldHeight)
             .background(MaterialTheme.colorScheme.surfaceVariant)
