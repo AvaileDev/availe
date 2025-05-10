@@ -17,7 +17,7 @@ import io.github.oikvpqya.compose.fastscroller.material3.defaultMaterialScrollba
 import io.github.oikvpqya.compose.fastscroller.rememberScrollbarAdapter
 
 private val min_height = 100.dp
-private val max_height = 400.dp
+private val max_height = 200.dp
 
 /**
  * A composable function that renders a responsive chat input field with a scrollbar
