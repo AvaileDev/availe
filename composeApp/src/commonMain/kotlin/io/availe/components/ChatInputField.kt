@@ -14,8 +14,8 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
-private val min_height = 100.dp
-private val max_height = 200.dp
+private val minHeight = 100.dp
+private val maxHeight = 200.dp
 
 /**
  * A composable function that renders a responsive chat input field with a scrollbar
@@ -27,13 +27,13 @@ private val max_height = 200.dp
 fun ChatInputField(modifier: Modifier = Modifier) {
     var textState by remember { mutableStateOf("") }
     val scrollState = rememberScrollState()
-    var textFieldHeight by remember { mutableStateOf(min_height) }
+    var textFieldHeight by remember { mutableStateOf(minHeight) }
     val density = LocalDensity.current
-    val maxHeightPx = with(density) { max_height.toPx() }
+    val maxHeightPx = with(density) { maxHeight.toPx() }
+    val minHeightPx = with(density) { minHeight.toPx() }
 
     Box(
         modifier
-            .heightIn(min = min_height, max = max_height)
             .height(textFieldHeight)
             .background(MaterialTheme.colorScheme.surfaceVariant)
             .padding(10.dp)
@@ -51,13 +51,12 @@ fun ChatInputField(modifier: Modifier = Modifier) {
             onTextLayout = { textLayoutResult ->
                 val rawPxHeight = textLayoutResult.size.height.toFloat()
 
-                /* Skip px-to-Dp conversion and use MAX_HEIGHT directly if text height exceeds maxHeightPx.
-                This avoids a px-to-Dp calculation,
-                which can be expensive should a user paste a gigantic amount of text. */
-                val newHeight: Dp = if (rawPxHeight > maxHeightPx) {
-                    max_height
-                } else {
-                    (rawPxHeight / density.density).dp
+                /* Skip px-to-Dp conversion when possible.
+                This can be expensive should a user paste a gigantic amount of text. */
+                val newHeight = when {
+                    rawPxHeight >= maxHeightPx -> maxHeight
+                    rawPxHeight <= minHeightPx -> minHeight
+                    else -> (rawPxHeight / density.density).dp
                 }
                 textFieldHeight = newHeight
             }
