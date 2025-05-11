@@ -1,5 +1,6 @@
 package io.availe.components
 
+import StandardVerticalScrollbar
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -12,9 +13,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import io.github.oikvpqya.compose.fastscroller.VerticalScrollbar
-import io.github.oikvpqya.compose.fastscroller.material3.defaultMaterialScrollbarStyle
-import io.github.oikvpqya.compose.fastscroller.rememberScrollbarAdapter
 
 private val min_height = 100.dp
 private val max_height = 200.dp
@@ -65,12 +63,6 @@ fun ChatInputField(modifier: Modifier = Modifier) {
             }
         )
 
-        VerticalScrollbar(
-            adapter = rememberScrollbarAdapter(scrollState),
-            modifier = Modifier
-                .align(Alignment.CenterEnd)
-                .fillMaxHeight(),
-            style = defaultMaterialScrollbarStyle()
-        )
+        StandardVerticalScrollbar(scrollState, Modifier.align(Alignment.CenterEnd))
     }
 }

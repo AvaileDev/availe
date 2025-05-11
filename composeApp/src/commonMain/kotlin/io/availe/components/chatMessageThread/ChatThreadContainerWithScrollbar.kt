@@ -1,5 +1,6 @@
 package io.availe.components.chatMessageThread
 
+import StandardVerticalScrollbar
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -7,9 +8,6 @@ import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import io.github.oikvpqya.compose.fastscroller.VerticalScrollbar
-import io.github.oikvpqya.compose.fastscroller.material3.defaultMaterialScrollbarStyle
-import io.github.oikvpqya.compose.fastscroller.rememberScrollbarAdapter
 
 @Composable
 fun ChatThreadContainerWithScrollbar(
@@ -25,12 +23,7 @@ fun ChatThreadContainerWithScrollbar(
                 .fillMaxWidth(responsiveWidth)
                 .fillMaxHeight()
         )
-        VerticalScrollbar(
-            adapter = rememberScrollbarAdapter(lazyListState),
-            style = defaultMaterialScrollbarStyle(),
-            modifier = Modifier
-                .align(Alignment.CenterEnd)
-                .fillMaxHeight()
-        )
+
+        StandardVerticalScrollbar(lazyListState, Modifier.align(Alignment.CenterEnd))
     }
 }
