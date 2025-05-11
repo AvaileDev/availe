@@ -23,7 +23,7 @@ fun App() {
     val responsiveWidth: Float = when {
         screenWidth < 600.dp -> .9f
         screenWidth < 840.dp -> .7f
-        else -> .55f
+        else -> .63f
     }
 
     MaterialTheme(colorScheme = lightColorScheme()) {

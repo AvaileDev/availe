@@ -8,6 +8,8 @@ import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import io.availe.data.mock.mockMessages
+import io.availe.data.mock.repeatedMockMessages
 
 @Composable
 fun ChatThreadContainerWithScrollbar(
@@ -18,6 +20,7 @@ fun ChatThreadContainerWithScrollbar(
     Box(modifier = modifier.fillMaxWidth()) {
         ChatThread(
             state = lazyListState,
+            messages = repeatedMockMessages,
             modifier = Modifier
                 .align(Alignment.Center)
                 .fillMaxWidth(responsiveWidth)
