@@ -20,12 +20,10 @@ object NLIPRequestMapper {
             format = JooqAllowedFormat.valueOf(dto.format.value)
             subformat = dto.subformat
             content = dto.content.toJsonb()
-            uuid = dto.uuid
         }
 
         val children = dto.submessages?.map { submessage ->
             NlipSubmessageRecord().apply {
-                requestUuid = dto.uuid
                 format = JooqAllowedFormat.valueOf(submessage.format.value)
                 subformat = submessage.subformat
                 content = submessage.content.toJsonb()
@@ -41,7 +39,6 @@ object NLIPRequestMapper {
         parent: NlipRequestRecord,
         children: List<NlipSubmessageRecord>
     ): NLIPRequest = NLIPRequest(
-        uuid = parent.uuid,
         messagetype = parent.messagetype?.let { NLIPRequest.Messagetype.valueOf(it.name) },
         format = ModelAllowedFormat.valueOf(parent.format.name),
         subformat = parent.subformat,

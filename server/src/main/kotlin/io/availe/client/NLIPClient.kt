@@ -37,7 +37,6 @@ class NLIPClient(private val http: HttpClient) {
         }
 
         val req = NLIPRequest(
-            uuid = UUID.randomUUID(),
             messagetype = null,
             format = AllowedFormat.text,
             subformat = "English",
@@ -54,14 +53,6 @@ class NLIPClient(private val http: HttpClient) {
         // Status‑code error?  throw first
         resp.body<Unit>()   // ensures raiseForStatus
 
-        // Inject fallback UUID if missing
-        val rawJson = resp.bodyAsText()
-        val correctedJson = if (!rawJson.contains("\"uuid\"")) {
-            rawJson.replaceFirst("{", "{\"uuid\":\"${UUID.randomUUID()}\",")
-        } else rawJson
-
-        // Decode back to Kotlin object
-//        return NLIPRequest.fromJson(resp.bodyAsText())
-        return NLIPRequest.fromJson(correctedJson)
+        return NLIPRequest.fromJson(resp.bodyAsText())
     }
 }

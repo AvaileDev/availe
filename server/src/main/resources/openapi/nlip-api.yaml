@@ -62,14 +62,10 @@ components:
     NLIPRequest:
       type: object
       required:
-        - uuid
         - format
         - subformat
         - content
       properties:
-        uuid:
-          type: string
-          format: uuid
         messagetype:
           type: string
           enum:
