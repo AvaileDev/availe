@@ -1,0 +1,14 @@
+<configuration>
+
+    <!-- Only ERROR+ on everything by default -->
+    <root level="ERROR">
+        <appender-ref ref="STDOUT"/>
+    </root>
+
+    <!-- Flyway: suppress INFO/DEBUG -->
+    <logger name="org.flywaydb" level="WARN"/>
+
+    <!-- jOOQ: suppress TRACE/DEBUG -->
+    <logger name="org.jooq" level="WARN"/>
+
+</configuration>

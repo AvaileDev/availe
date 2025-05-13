@@ -10,8 +10,6 @@ import io.ktor.client.call.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.*
-import kotlinx.serialization.json.JsonPrimitive
-import java.util.UUID
 
 class NLIPClient(private val http: HttpClient) {
 

@@ -1,4 +1,6 @@
 import nu.studer.gradle.jooq.JooqEdition
+import org.jetbrains.kotlin.gradle.internal.KaptGenerateStubsTask
+import org.jetbrains.kotlin.gradle.internal.KaptTask
 import org.jooq.meta.jaxb.Logging
 
 
@@ -37,6 +39,7 @@ plugins {
     alias(libs.plugins.flyway)
     alias(libs.plugins.shadow)
     alias(libs.plugins.openapi.generator)
+    id("org.jetbrains.kotlin.kapt")
     application
 }
 
@@ -58,6 +61,9 @@ dependencies {
 
     jooqGenerator(libs.postgresql)
 
+    implementation(libs.mapstruct)
+    kapt(libs.mapstruct.processor)
+
     implementation(libs.ktor.server.cio)
     implementation(libs.ktor.client.core)
     implementation(libs.ktor.client.cio)
@@ -68,6 +74,11 @@ dependencies {
     testImplementation(libs.ktor.server.test.host)
     testImplementation(libs.kotlin.test.junit)
     testImplementation(libs.postgresql)
+    testImplementation(libs.flyway.core)
+    testImplementation(libs.flyway.database.postgresql)
+    testImplementation(libs.snakeyaml)
+    testImplementation(platform(libs.jackson.bom))
+    testImplementation(libs.jackson.databind)
 }
 
 /** ------------- jOOQ config ------------- */
@@ -123,7 +134,7 @@ flyway {
     user = dbUser
     password = dbPass
     schemas = arrayOf(dbSchema)
-    locations = arrayOf("filesystem:${rootProject.projectDir}/src/main/resources/db/migration")
+    locations = arrayOf("filesystem:${rootProject.layout.projectDirectory.asFile}/src/main/resources/db/migration")
     cleanDisabled = false
 }
 
@@ -131,11 +142,10 @@ flyway {
 
 openApiGenerate {
     generatorName.set("kotlin")
-    inputSpec.set("$projectDir/src/main/resources/openapi/nlip-api.yaml")
+    inputSpec.set(layout.projectDirectory.file("src/main/resources/openapi/nlip-api.yaml").asFile.toString())
     outputDir.set(layout.buildDirectory.dir("generated/openapi").get().toString())
     apiPackage.set("io.availe.openapi.api")
     modelPackage.set("io.availe.openapi.model")
-    invokerPackage.set("io.availe.openapi.invoker")
     library.set("jvm-ktor")
     configOptions.set(
         mapOf(
@@ -150,14 +160,6 @@ sourceSets["main"].kotlin.srcDir(
     layout.buildDirectory.dir("generated/openapi/src/main/kotlin")
 )
 
-// Fix for the warning: invokerPackage with kotlin generator is ignored. Use packageName.
-tasks.named("openApiGenerate") {
-    doFirst {
-        // This is just to acknowledge the warning, no action needed
-        println("Note: invokerPackage is ignored with kotlin generator, using packageName instead.")
-    }
-}
-
 /** ------------- Build hooks & helper tasks ------------- */
 
 // Always run Flyway before compiling Kotlin and generating jOOQ classes
@@ -165,9 +167,43 @@ tasks.named("compileKotlin") {
     dependsOn("flywayMigrate", "openApiGenerate")
 }
 
+// Task to run EnumValuesSyncTest
+tasks.register<Test>("runEnumValuesSyncTest") {
+    group = "verification"
+    description = "Runs EnumValuesSyncTest to verify enum values sync between OpenAPI and database"
+
+    // Only include EnumValuesSyncTest
+    filter {
+        includeTestsMatching("io.availe.drift.EnumValuesSyncTest")
+    }
+
+    // Set up timestamp file to track if schemas have changed
+    val timestampFile = layout.buildDirectory.file("tmp/openapi-last-modified.txt").get().asFile
+    val openApiFile = layout.projectDirectory.file("src/main/resources/openapi/nlip-api.yaml").asFile
+
+    // Only run if schemas have changed or timestamp file doesn't exist
+    onlyIf {
+        if (!timestampFile.exists()) {
+            return@onlyIf true
+        }
+
+        val lastModified = timestampFile.readText().toLongOrNull() ?: 0L
+        val currentModified = openApiFile.lastModified()
+
+        // Run if OpenAPI file has been modified
+        currentModified > lastModified
+    }
+
+    // After test runs, update the timestamp file
+    doLast {
+        timestampFile.parentFile.mkdirs()
+        timestampFile.writeText(openApiFile.lastModified().toString())
+    }
+}
+
 // Always run Flyway before starting the server
 tasks.named<JavaExec>("run") {
-    dependsOn("flywayMigrate")
+    dependsOn("flywayMigrate", "runEnumValuesSyncTest")
 }
 
 
@@ -191,4 +227,8 @@ tasks.named<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar>("shadowJ
     archiveClassifier.set("all")
     archiveVersion.set("")
     mergeServiceFiles()
+}
+
+tasks.withType<KaptGenerateStubsTask>().configureEach {
+    dependsOn("openApiGenerate")
 }

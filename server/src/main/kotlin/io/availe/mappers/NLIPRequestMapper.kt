@@ -1,55 +1,67 @@
 package io.availe.mappers
 
-import io.availe.jooq.tables.records.NlipRequestRecord
-import io.availe.jooq.tables.records.NlipSubmessageRecord
-import io.availe.models.toJsonb
-import io.availe.models.toObject
 import io.availe.openapi.model.NLIPRequest
 import io.availe.openapi.model.NLIPSubMessage
-import java.util.*
-import io.availe.jooq.enums.AllowedFormat as JooqAllowedFormat
-import io.availe.jooq.enums.MessageType as JooqMessageType
-import io.availe.openapi.model.AllowedFormat as ModelAllowedFormat
+import io.availe.jooq.tables.records.NlipRequestRecord
+import io.availe.jooq.tables.records.NlipSubmessageRecord
+import org.mapstruct.*
 
-object NLIPRequestMapper {
-    /** ------------- Write to SQL DB ------------- */
-    fun toRecords(dto: NLIPRequest): Pair<NlipRequestRecord, List<NlipSubmessageRecord>> {
-        val parent = NlipRequestRecord().apply {
-            // Convert messagetype enum to string if not null, otherwise use null
-            messagetype = dto.messagetype?.let { JooqMessageType.valueOf(it.value) }
-            format = JooqAllowedFormat.valueOf(dto.format.value)
-            subformat = dto.subformat
-            content = dto.content.toJsonb()
-        }
+/**
+ * Mapper for converting between NLIPRequest DTOs and NlipRequestRecord entities.
+ * Handles the parent-child relationship between requests and submessages.
+ */
+@Mapper(
+    unmappedTargetPolicy = ReportingPolicy.ERROR,
+    unmappedSourcePolicy = ReportingPolicy.ERROR,
+    uses = [EnumHelpers::class, JsonHelpers::class, NlipSubMessageMapper::class],
+    nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.SET_TO_NULL
+)
+interface NlipRequestMapper {
 
-        val children = dto.submessages?.map { submessage ->
-            NlipSubmessageRecord().apply {
-                format = JooqAllowedFormat.valueOf(submessage.format.value)
-                subformat = submessage.subformat
-                content = submessage.content.toJsonb()
-                label = submessage.label
-            }
-        } ?: emptyList()
-
-        return parent to children
-    }
-
-    /** ------------- Get record from SQL DB ------------- */
-    fun fromRecords(
-        parent: NlipRequestRecord,
-        children: List<NlipSubmessageRecord>
-    ): NLIPRequest = NLIPRequest(
-        messagetype = parent.messagetype?.let { NLIPRequest.Messagetype.valueOf(it.name) },
-        format = ModelAllowedFormat.valueOf(parent.format.name),
-        subformat = parent.subformat,
-        content = parent.content.toObject<String>(),
-        submessages = children.map {
-            NLIPSubMessage(
-                format = ModelAllowedFormat.valueOf(it.format.name),
-                subformat = it.subformat,
-                content = it.content.toObject<String>(),
-                label = it.label
-            )
-        }
+    /**
+     * Converts a NLIPRequest DTO to a NlipRequestRecord entity.
+     * Ignores submessages as they are handled separately.
+     *
+     * @param dto The NLIPRequest DTO to convert
+     * @return The corresponding NlipRequestRecord entity
+     */
+    @BeanMapping(ignoreUnmappedSourceProperties = ["submessages"])
+    @Mappings(
+        Mapping(target = "messagetype", source = "messagetype", qualifiedByName = ["dtoToDbMessageType"]),
+        Mapping(target = "format", source = "format", qualifiedByName = ["dtoToDbAllowedFormat"]),
+        Mapping(target = "content", source = "content", qualifiedByName = ["stringToJsonb"]),
+        Mapping(target = "id", ignore = true),
+        Mapping(target = "createdAt", ignore = true),
+        Mapping(target = "conversationId", ignore = true),
+        Mapping(target = "ordinal", ignore = true)
     )
+    fun toEntity(dto: NLIPRequest): NlipRequestRecord
+
+    /**
+     * Converts a list of NLIPSubMessage DTOs to a list of NlipSubmessageRecord entities.
+     *
+     * @param list The list of NLIPSubMessage DTOs to convert
+     * @return The corresponding list of NlipSubmessageRecord entities
+     */
+    fun toSubEntities(list: List<NLIPSubMessage>): List<NlipSubmessageRecord>
+
+    /**
+     * Converts a NlipRequestRecord entity and its child NlipSubmessageRecord entities to a NLIPRequest DTO.
+     *
+     * @param parent The parent NlipRequestRecord entity
+     * @param children The list of child NlipSubmessageRecord entities
+     * @return The corresponding NLIPRequest DTO with submessages populated
+     */
+    @BeanMapping(
+        ignoreByDefault = true,
+        ignoreUnmappedSourceProperties = ["qualifier", "SQLTypeName", "table", "id", "createdAt", "conversationId", "ordinal"]
+    )
+    @Mappings(
+        Mapping(target = "messagetype", source = "parent.messagetype", qualifiedByName = ["dbToDtoMessageType"]),
+        Mapping(target = "format", source = "parent.format", qualifiedByName = ["dbToDtoAllowedFormat"]),
+        Mapping(target = "subformat", source = "parent.subformat"),
+        Mapping(target = "content", source = "parent.content", qualifiedByName = ["jsonbToString"]),
+        Mapping(target = "submessages", source = "children")
+    )
+    fun fromEntity(parent: NlipRequestRecord, children: List<NlipSubmessageRecord>): NLIPRequest
 }

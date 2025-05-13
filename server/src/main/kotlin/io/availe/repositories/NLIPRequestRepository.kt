@@ -2,46 +2,45 @@ package io.availe.repositories
 
 import io.availe.jooq.tables.NlipRequest.NLIP_REQUEST
 import io.availe.jooq.tables.NlipSubmessage.NLIP_SUBMESSAGE
-import io.availe.mappers.NLIPRequestMapper
+import io.availe.mappers.NlipRequestMapper
 import io.availe.openapi.model.NLIPRequest
 import org.jooq.DSLContext
+import org.mapstruct.factory.Mappers
 import java.util.UUID
 
 class NLIPRequestRepository(private val dsl: DSLContext) {
 
-    /**
-     * Persist a complete NLIPRequest (with sub‑messages) in one transaction.
-     */
+    private val mapper: NlipRequestMapper =
+        Mappers.getMapper(NlipRequestMapper::class.java)
+
+    /* ---------- save ---------------------------------------------------- */
     fun save(request: NLIPRequest) {
-        val (parent, children) = NLIPRequestMapper.toRecords(request)
+        val parent = mapper.toEntity(request)
+        val children = mapper
+            .toSubEntities(request.submessages ?: emptyList())
+
         dsl.transaction { cfg ->
             cfg.dsl().insertInto(NLIP_REQUEST).set(parent).execute()
+
             if (children.isNotEmpty()) {
-                // Set the request_uuid for each submessage
-                val childrenWithRequestUuid = children.map { child ->
-                    child.apply {
-                        requestUuid = parent.uuid
-                    }
-                }
-                cfg.dsl().batchInsert(childrenWithRequestUuid).execute()
+                children.forEach { it.requestId = parent.id }
+                cfg.dsl().batchInsert(children).execute()
             }
         }
     }
 
-    /**
-     * Fetch a full NLIPRequest by UUID. Returns null if not found.
-     */
-    fun find(uuid: UUID): NLIPRequest? {
+    /* ---------- find ---------------------------------------------------- */
+    fun find(id: UUID): NLIPRequest? {
         val parent = dsl.selectFrom(NLIP_REQUEST)
-            .where(NLIP_REQUEST.UUID.eq(uuid))
+            .where(NLIP_REQUEST.ID.eq(id))
             .fetchOne()
             ?: return null
 
         val children = dsl.selectFrom(NLIP_SUBMESSAGE)
-            .where(NLIP_SUBMESSAGE.REQUEST_UUID.eq(uuid))
-            .orderBy(NLIP_SUBMESSAGE.ID.asc()) // preserves insertion order
+            .where(NLIP_SUBMESSAGE.REQUEST_ID.eq(id))
+            .orderBy(NLIP_SUBMESSAGE.ID.asc())
             .fetch()
 
-        return NLIPRequestMapper.fromRecords(parent, children)
+        return mapper.fromEntity(parent, children)
     }
 }

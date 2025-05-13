@@ -21,6 +21,10 @@ android-compileSdk = "35"
 android-minSdk = "21"
 android-targetSdk = "35"
 compose-hot-reload = "1.0.0-alpha09"
+mapstruct = "1.6.3"
+snakeyaml = "2.3"
+jackson = "2.17.0"
+
 
 [libraries]
 androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "androidx-activityCompose" }
@@ -42,6 +46,12 @@ ktor-server-core = { module = "io.ktor:ktor-server-core-jvm", version.ref = "kto
 ktor-server-test-host = { module = "io.ktor:ktor-server-test-host-jvm", version.ref = "ktor" }
 logback = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
 postgresql = { module = "org.postgresql:postgresql", version.ref = "postgresql" }
+mapstruct = { module = "org.mapstruct:mapstruct", version.ref = "mapstruct" }
+mapstruct-processor = { module = "org.mapstruct:mapstruct-processor", version.ref = "mapstruct" }
+flyway-core = { module = "org.flywaydb:flyway-core", version.ref = "flyway" }
+snakeyaml   = { module = "org.yaml:snakeyaml",         version.ref = "snakeyaml" }
+jackson-bom = { module = "com.fasterxml.jackson:jackson-bom", version.ref = "jackson" }
+jackson-databind = { module = "com.fasterxml.jackson.core:jackson-databind", version.ref = "jackson" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }
