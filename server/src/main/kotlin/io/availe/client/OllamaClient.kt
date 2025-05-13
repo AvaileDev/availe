@@ -35,7 +35,7 @@ class OllamaClient(private val httpClient: HttpClient) {
             contentType(ContentType.Application.Json)
             setBody(
                 OllamaModelQuery(
-                    model = "granite3.3:8b",
+                    model = "granite3-moe:latest",
                     prompt = prompt,
                     stream = false
                 )

@@ -25,7 +25,7 @@ interface NlipRequestMapper {
      * @param dto The NLIPRequest DTO to convert
      * @return The corresponding NlipRequestRecord entity
      */
-    @BeanMapping(ignoreUnmappedSourceProperties = ["submessages"])
+    @BeanMapping(ignoreUnmappedSourceProperties = ["submessages", "label"])
     @Mappings(
         Mapping(target = "messagetype", source = "messagetype", qualifiedByName = ["dtoToDbMessageType"]),
         Mapping(target = "format", source = "format", qualifiedByName = ["dtoToDbAllowedFormat"]),

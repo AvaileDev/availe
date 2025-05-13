@@ -76,6 +76,9 @@ components:
           type: string
         content:
           type: string
+        label:
+          type: string
+          nullable: true
         submessages:
           type: array
           items:

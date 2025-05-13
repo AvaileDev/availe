@@ -1,6 +1,8 @@
 package io.availe.components.chatMessageThread
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -13,6 +15,26 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+
+// Decides whether to show a user or AI message
+@Composable
+fun ChatThreadMessageRow(index: Int, messages: List<String>) {
+    val isAi = index % 2 == 1
+    val message = messages[index]
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 8.dp, vertical = 4.dp),
+        horizontalArrangement = if (isAi) Arrangement.Start else Arrangement.End
+    ) {
+        if (isAi) {
+            ChatThreadAiText(message)
+        } else {
+            ChatThreadUserBubble(message)
+        }
+    }
+}
 
 @Composable
 fun ChatThreadAiText(message: String) {

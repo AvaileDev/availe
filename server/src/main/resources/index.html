@@ -3,44 +3,41 @@
 <head>
     <meta charset="utf-8">
     <title>NLIP quick-test</title>
-    <style>
-        body {
-            font-family: sans-serif;
-            max-width: 600px;
-            margin: 2rem auto;
-        }
-
-        #reply {
-            white-space: pre-wrap;
-            border: 1px solid #ccc;
-            padding: 1rem;
-            margin-top: 1rem;
-        }
-    </style>
+    <link rel="stylesheet" href="/static/styles.css">
 </head>
 <body>
 <h1>NLIP quick-test</h1>
-<input autofocus id="prompt" placeholder="Type a message…" size="50">
-<button id="send">Send</button>
-<div id="reply"></div>
-<script>
-    const promptEl = document.getElementById('prompt');
-    const replyEl = document.getElementById('reply');
-    document.getElementById('send').addEventListener('click', async () => {
-        const q = promptEl.value.trim();
-        if (!q) return;
-        replyEl.textContent = 'Loading…';
-        try {
-            const res = await fetch('/chat?q=' + encodeURIComponent(q));
-            if (!res.ok) throw new Error(res.status + ' ' + res.statusText);
-            replyEl.textContent = await res.text();
-        } catch (e) {
-            replyEl.textContent = 'Error: ' + e;
-        }
-    });
-    promptEl.addEventListener('keydown', e => {
-        if (e.key === 'Enter') document.getElementById('send').click();
-    });
-</script>
+
+<form id="nlip-form">
+
+    <fieldset id="endpoint-choice">
+        <legend>Chat source</legend>
+
+        <label>
+            <input type="radio" name="source" value="internal" checked>
+            Internal
+        </label>
+
+        <label>
+            <input type="radio" name="source" value="external">
+            External
+        </label>
+    </fieldset>
+
+    <input
+            id="prompt"
+            name="q"
+            placeholder="Type a message…"
+            size="50"
+            autocomplete="off"
+            required
+            autofocus
+    >
+    <button id="send" type="submit" disabled>Send</button>
+</form>
+
+<pre id="reply"></pre>
+
+<script type="module" src="/static/main.js"></script>
 </body>
 </html>

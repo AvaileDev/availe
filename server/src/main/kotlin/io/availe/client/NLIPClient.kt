@@ -11,46 +11,35 @@ import io.ktor.client.request.*
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.*
 
-class NLIPClient(private val http: HttpClient) {
+class NLIPClient(private val http: HttpClient, private val baseUrl: Url) {
 
-    companion object {
-        private const val URL = "http://localhost:8004/nlip/"
-    }
+    private val endpoint: Url = URLBuilder(baseUrl).apply {
+        encodedPath = encodedPath.removeSuffix("/") + "/nlip/"
+    }.build()
 
-    /**
-     * Send one NLIP text request and return the server’s NLIP reply object.
-     * Pass `correlator = null` for the very first turn.
-     */
-    suspend fun ask(prompt: String, correlator: String? = null): NLIPRequest {
+    suspend fun ask(prompt: String, conversationId: String? = null): NLIPRequest {
 
-        // ----- build request -----
-        val subMsgs = correlator?.let {
-            listOf(
-                NLIPSubMessage(
-                    format = AllowedFormat.token,
-                    subformat = "correlator",
-                    content = it
-                )
+        val conversationIdSubmessage = conversationId?.let {
+            NLIPSubMessage(
+                format = AllowedFormat.token,
+                subformat = "conversation-id",
+                content = it,
+                label = null
             )
         }
 
         val req = NLIPRequest(
             messagetype = null,
-            format = AllowedFormat.text,
-            subformat = "English",
-            content = prompt,
-            submessages = subMsgs
+            format      = AllowedFormat.text,
+            subformat   = "English",
+            content     = prompt,
+            label = null,
+            submessages = conversationIdSubmessage?.let { listOf(it) }
         )
 
-        // ----- POST to /nlip/ -----
-        val resp = http.post(URL) {
+        return http.post(endpoint) {
             contentType(ContentType.Application.Json)
-            setBody(req.toJson())                        // String produced by NLIP_JSON
-        }
-
-        // Status‑code error?  throw first
-        resp.body<Unit>()   // ensures raiseForStatus
-
-        return NLIPRequest.fromJson(resp.bodyAsText())
+            setBody(req)
+        }.body()
     }
 }

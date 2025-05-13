@@ -10,7 +10,8 @@ import io.ktor.server.cio.*
 import io.ktor.server.engine.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import io.availe.openapi.model.AllowedFormat
+import io.ktor.http.Url
+import io.ktor.server.http.content.staticResources
 
 fun main() {
     embeddedServer(CIO, port = SERVER_PORT, host = "0.0.0.0", module = Application::module)
@@ -19,18 +20,18 @@ fun main() {
 
 fun Application.module() {
 
-    /* ---------- shared HTTP client ---------- */
-    val http = HttpClient(io.ktor.client.engine.cio.CIO) {
+    val httpClient = HttpClient(io.ktor.client.engine.cio.CIO) {
         install(io.ktor.client.plugins.contentnegotiation.ContentNegotiation) {
             json()
         }
     }
 
-    val nlip = NLIPClient(http)
-    val ollama = OllamaClient(http)
+    val internalChat = OllamaClient(httpClient)
+    val externalChat = NLIPClient(httpClient, Url("http://localhost:8004"))
 
-    /* ---------- routes ---------- */
     routing {
+        staticResources("/static", basePackage = "static")
+
         get("/") {
             val html = this::class.java
                 .classLoader
@@ -41,18 +42,22 @@ fun Application.module() {
         }
 
         get("/nlip/ping") {
-            val reply = nlip.ask("Ping NLIP server!")
+            val reply = externalChat.ask("Ping NLIP server!")
             call.respondText("NLIP replied: ${reply.content}")
         }
 
-        get("/chat") {
-            val user = call.request.queryParameters["q"] ?: ""
-            val firstTurn = nlip.ask(user)
-            val corr = firstTurn.submessages
-                ?.firstOrNull { it.format == AllowedFormat.token && it.subformat == "correlator" }
-                ?.content
-//            call.respondText("NLIP said: ${firstTurn.content} (corr=$corr)")
-            call.respondText(firstTurn.content)
+        route("/chat") {
+            get {
+                val userQ = call.request.queryParameters["q"] ?: ""
+                val reply = internalChat.generate(userQ)
+                call.respondText(reply)
+            }
+
+            get("/external") {
+                val userQ = call.request.queryParameters["q"] ?: ""
+                val reply = externalChat.ask(userQ)
+                call.respondText(reply.content)
+            }
         }
     }
 }
