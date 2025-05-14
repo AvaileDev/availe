@@ -69,6 +69,8 @@ kotlin {
             implementation(libs.fastscroller.material3)
             implementation(libs.fastscroller.indicator)
             implementation(projects.shared)
+            implementation(libs.ktor.client.core)
+            implementation(libs.ktor.client.cio)
         }
         desktopMain.dependencies {
             implementation(compose.desktop.currentOs)

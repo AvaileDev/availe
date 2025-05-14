@@ -4,20 +4,20 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import io.availe.data.mock.mockMessages
+import io.availe.viewmodels.UiMessage
 
 @Composable
 fun ChatThread(
     state: LazyListState,
     modifier: Modifier = Modifier,
-    messages: List<String> = mockMessages,
+    messages: List<UiMessage> = emptyList(),
 ) {
     LazyColumn(
         state = state,
         modifier = modifier
     ) {
         items(messages.size) { index ->
-            ChatThreadMessageRow(index, messages)
+            ChatThreadMessageRow(messages[index])
         }
     }
 }

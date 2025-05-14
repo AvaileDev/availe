@@ -15,12 +15,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import io.availe.viewmodels.UiMessage
 
 // Decides whether to show a user or AI message
 @Composable
-fun ChatThreadMessageRow(index: Int, messages: List<String>) {
-    val isAi = index % 2 == 1
-    val message = messages[index]
+fun ChatThreadMessageRow(message: UiMessage) {
+    val isAi = message.fromAi
 
     Row(
         modifier = Modifier
@@ -29,9 +29,9 @@ fun ChatThreadMessageRow(index: Int, messages: List<String>) {
         horizontalArrangement = if (isAi) Arrangement.Start else Arrangement.End
     ) {
         if (isAi) {
-            ChatThreadAiText(message)
+            ChatThreadAiText(message.text)
         } else {
-            ChatThreadUserBubble(message)
+            ChatThreadUserBubble(message.text)
         }
     }
 }

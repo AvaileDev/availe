@@ -6,13 +6,17 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import io.availe.network.ChatTarget
+import io.availe.viewmodels.ChatViewModel
 
 private val minHeight = 100.dp
 private val maxHeight = 200.dp
@@ -22,10 +26,17 @@ private val maxHeight = 200.dp
  * and adaptive height adjustment based on the amount of text input.
  *
  * @param modifier Optional modifier that applies layout to the Box container.
+ * @param viewModel The ChatViewModel to send messages to.
  */
 @Composable
-fun ChatInputField(modifier: Modifier = Modifier) {
-    var textState by remember { mutableStateOf("") }
+fun ChatInputField(
+    modifier: Modifier = Modifier,
+    text: String,
+    onTextChange: (String) -> Unit,
+    useInternal: Boolean,
+    onToggleUseInternal: () -> Unit,
+    onSend: (String) -> Unit
+) {
     val scrollState = rememberScrollState()
     var textFieldHeight by remember { mutableStateOf(minHeight) }
     val density = LocalDensity.current
@@ -38,29 +49,47 @@ fun ChatInputField(modifier: Modifier = Modifier) {
             .background(MaterialTheme.colorScheme.surfaceVariant)
             .padding(10.dp)
     ) {
-        BasicTextField(
-            value = textState,
-            onValueChange = { textState = it },
-            modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(scrollState),
+        Row(
+            modifier = Modifier.fillMaxSize(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            BasicTextField(
+                value = text,
+                onValueChange = onTextChange,
+                modifier = Modifier
+                    .weight(1f)
+                    .verticalScroll(scrollState),
 
-            /* Sets the height of the parent [Box container] explicitly.
-            We set the height of the parent from the child because otherwise,
-            the scrollbar fully expands the parents even when there's zero text. */
-            onTextLayout = { textLayoutResult ->
-                val rawPxHeight = textLayoutResult.size.height.toFloat()
+                /* Sets the height of the parent [Box container] explicitly.
+                We set the height of the parent from the child because otherwise,
+                the scrollbar fully expands the parents even when there's zero text. */
+                onTextLayout = { textLayoutResult ->
+                    val rawPxHeight = textLayoutResult.size.height.toFloat()
 
-                /* Skip px-to-Dp conversion when possible.
-                This can be expensive should a user paste a gigantic amount of text. */
-                val newHeight = when {
-                    rawPxHeight >= maxHeightPx -> maxHeight
-                    rawPxHeight <= minHeightPx -> minHeight
-                    else -> (rawPxHeight / density.density).dp
+                    /* Skip px-to-Dp conversion when possible.
+                    This can be expensive should a user paste a gigantic amount of text. */
+                    val newHeight = when {
+                        rawPxHeight >= maxHeightPx -> maxHeight
+                        rawPxHeight <= minHeightPx -> minHeight
+                        else -> (rawPxHeight / density.density).dp
+                    }
+                    textFieldHeight = newHeight
                 }
-                textFieldHeight = newHeight
+            )
+
+            Column {
+                Button(
+                    onClick = { onSend(text) },
+                    enabled = text.isNotBlank()
+                ) {
+                    Text("Send")
+                }
+
+                Button(onClick = onToggleUseInternal) {
+                    Text(if (useInternal) "Internal" else "External")
+                }
             }
-        )
+        }
 
         StandardVerticalScrollbar(scrollState, Modifier.align(Alignment.CenterEnd))
     }
