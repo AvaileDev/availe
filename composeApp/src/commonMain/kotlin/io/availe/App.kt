@@ -9,7 +9,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import io.availe.components.ChatInputField
-import io.availe.components.chatMessageThread.ChatThreadContainerWithScrollbar
+import io.availe.components.chatMessageThread.ChatThread
 import io.availe.network.KtorChatRepository
 import io.availe.network.ChatTarget
 import io.availe.util.getScreenWidthDp
@@ -41,8 +41,8 @@ fun App() {
                     .padding(vertical = 12.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                ChatThreadContainerWithScrollbar(
-                    lazyListState = listState,
+                ChatThread(
+                    state = listState,
                     responsiveWidth = responsiveWidth,
                     viewModel = chatViewModel,
                     modifier = Modifier
