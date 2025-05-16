@@ -1,27 +1,40 @@
 package io.availe.network
 
 import io.availe.SERVER_PORT
-import io.ktor.client.HttpClient
-import io.ktor.client.request.get
-import io.ktor.client.request.parameter
-import io.ktor.client.statement.bodyAsText
+import io.availe.models.ChatMessage
+import io.ktor.client.*
+import io.ktor.client.request.*
+import io.ktor.client.statement.*
+import io.ktor.http.*
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 class KtorChatRepository(
     private val httpClient: HttpClient,
-    private val port: Int = SERVER_PORT
 ) : ChatRepository {
+    @OptIn(ExperimentalUuidApi::class, ExperimentalTime::class)
     override suspend fun sendMessage(
         text: String,
-        target: ChatTarget,
-        conversationId: String?
+        conversationId: String?,
+        targetPort: Int
     ): String {
-        val path = when (target) {
-            ChatTarget.Internal -> "/chat"
-            ChatTarget.External -> "/chat/external"
-        }
-        return httpClient.get("http://localhost:$port$path") {
-            parameter("q", text)
-            conversationId?.let { parameter("conversationId", it) }
+        val path = "/chat"
+
+        val message = ChatMessage(
+            id = Uuid.random().toString(),
+            senderId = "mobile-client",
+            textContent = text,
+            timeStamp = Clock.System.now().toEpochMilliseconds(),
+            conversationId = null
+        )
+
+
+        val url = "http://localhost:$SERVER_PORT/$targetPort/chat"
+        return httpClient.post(url) {
+            contentType(ContentType.Application.Json)
+            setBody(message)
         }.bodyAsText()
     }
 }
