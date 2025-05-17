@@ -69,11 +69,11 @@ dependencies {
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.ktor.client.content.negotiation)
     implementation(libs.ktor.serialization.kotlinx.json)
-    implementation("io.ktor:ktor-server-content-negotiation:${libs.versions.ktor.get()}")
     implementation(libs.ktor.client.core)
     implementation(libs.ktor.client.cio)
     implementation(libs.logback)
     implementation(libs.ktor.client.logging)
+    implementation(libs.ktor.server.content.negotiation)
 
     testImplementation(libs.ktor.server.test.host)
     testImplementation(libs.kotlin.test.junit)
