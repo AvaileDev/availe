@@ -22,21 +22,29 @@ fun Route.chatRoute(internalChat: OllamaClient, httpClient: HttpClient) {
             call.respondText(responseText, ContentType.Text.Plain)
         } else {
             call.respondTextWriter(contentType = ContentType.Text.Plain) {
-                try {
-                    val dynamicExternalChat = NLIPClient(httpClient, Url("http://localhost:$targetPort"))
-
-                    val response = dynamicExternalChat.ask(incoming.textContent)
-
-                    response.content.lineSequence().forEach {
-                        write(it)
-                        write("\n")
-                        flush()
-                    }
-
-                } catch (e: Exception) {
-                    write("Error: ${e.message ?: "Unknown"}\n")
+                handleNLIPChatResponse(httpClient, targetPort, incoming) { text ->
+                    write(text)
+                    flush()
                 }
             }
         }
+    }
+}
+
+suspend fun handleNLIPChatResponse(
+    httpClient: HttpClient,
+    targetPort: Int,
+    incoming: ChatMessage,
+    writer: (String) -> Unit
+) {
+    try {
+        val dynamicExternalChat = NLIPClient(httpClient, Url("http://localhost:$targetPort"))
+        val response = dynamicExternalChat.ask(incoming.textContent)
+        response.content.lineSequence().forEach {
+            writer(it)
+            writer("\n")
+        }
+    } catch (e: Exception) {
+        writer("Error: ${e.message ?: "Unknown"}\n")
     }
 }
