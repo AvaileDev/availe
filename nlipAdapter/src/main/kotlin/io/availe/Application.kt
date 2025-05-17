@@ -1,5 +1,6 @@
 package io.availe
 
+import io.availe.config.ClientProvider
 import io.ktor.server.application.*
 import io.ktor.server.cio.*
 import io.ktor.server.engine.*
@@ -11,5 +12,6 @@ fun main() {
 }
 
 fun Application.module() {
+    val httpClient = ClientProvider.client
 
 }
