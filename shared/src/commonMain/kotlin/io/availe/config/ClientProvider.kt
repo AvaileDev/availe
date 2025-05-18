@@ -6,6 +6,7 @@ import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.serialization.kotlinx.json.*
 
 object ClientProvider {
+    
     val client: HttpClient = HttpClient(CIO) {
         install(ContentNegotiation) {
             json()

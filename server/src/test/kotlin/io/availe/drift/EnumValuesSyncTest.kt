@@ -4,13 +4,11 @@ import io.availe.testkit.Env
 import io.availe.testkit.TestDatabase
 import org.flywaydb.core.Flyway
 import org.jooq.DSLContext
-import org.jooq.impl.DSL
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
 import org.yaml.snakeyaml.Yaml
-import java.io.File
 
 class EnumValuesSyncTest {
 
@@ -27,13 +25,12 @@ class EnumValuesSyncTest {
             .migrate()
         dsl = db.dsl
 
-        val resource = this::class.java.classLoader
-            .getResource("openapi/nlip-api.yaml")
-            ?: error("OpenAPI spec not found on classpath: openapi/nlip-api.yaml")
-        val yamlFile = File(resource.toURI())
-        yamlMap = Yaml()
-            .load<Any>(yamlFile.inputStream()) as? Map<*, *>
-            ?: error("Failed to parse OpenAPI YAML into Map")
+        val stream = javaClass.classLoader
+            .getResourceAsStream("openapi/nlip-api.yaml")
+            ?: error("openapi/nlip-api.yaml not found on classpath")
+
+        yamlMap = Yaml().load<Any>(stream) as? Map<*, *>
+            ?: error("Failed to parse OpenAPI YAML")
     }
 
     @After

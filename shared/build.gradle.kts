@@ -7,6 +7,7 @@ plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.androidLibrary)
     alias(libs.plugins.kotlin.serialization)
+    alias(libs.plugins.openapi.generator)
 }
 
 kotlin {
@@ -43,12 +44,22 @@ kotlin {
     }
 
     sourceSets {
-        commonMain.dependencies {
-            implementation(libs.kotlinx.serialization.json)
-            implementation(libs.ktor.client.core)
+        commonMain {
+            kotlin.srcDir(
+                layout.buildDirectory
+                    .dir("generated/openapi/src/commonMain/kotlin")
+            )
+            dependencies {
+                implementation(libs.kotlinx.serialization.json)
+                implementation(libs.ktor.client.core)
+                implementation(libs.ktor.client.cio)
+                implementation(libs.ktor.serialization.kotlinx.json)
+                implementation(libs.ktor.client.content.negotiation)
+            }
+        }
+
+        jvmMain.dependencies {
             implementation(libs.ktor.client.cio)
-            implementation(libs.ktor.serialization.kotlinx.json)
-            implementation(libs.ktor.client.content.negotiation)
         }
     }
 }
@@ -63,4 +74,25 @@ android {
     defaultConfig {
         minSdk = libs.versions.android.minSdk.get().toInt()
     }
+}
+
+/** ------------- OpenAPI Code Gen ------------- */
+
+openApiGenerate {
+    generatorName.set("kotlin")
+    inputSpec.set(layout.projectDirectory.file("src/commonMain/resources/openapi/nlip-api.yaml").asFile.absolutePath)
+    outputDir.set(layout.buildDirectory.dir("generated/openapi").get().toString())
+    apiPackage.set("io.availe.openapi.api")
+    modelPackage.set("io.availe.openapi.model")
+    library.set("multiplatform")
+    configOptions.set(
+        mapOf(
+            "serializableModel" to "false", // suppresses java.io.Serializable
+            "dateLibrary" to "string",
+        )
+    )
+}
+
+tasks.matching { it.name.startsWith("compileKotlin") }.configureEach {
+    dependsOn(tasks.named("openApiGenerate"))
 }

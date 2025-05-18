@@ -3,7 +3,7 @@ package io.availe
 import io.availe.client.NLIPClient
 import io.availe.client.OllamaClient
 import io.availe.config.ClientProvider
-import io.availe.routes.chatRoute
+import io.availe.routes.NLIPRoutes
 import io.availe.routes.healthRoutes
 import io.availe.routes.staticRoutes
 import io.ktor.http.*
@@ -35,6 +35,6 @@ fun Application.module() {
     routing {
         staticRoutes()
         healthRoutes(externalChat)
-        chatRoute(internalChat, httpClient)
+        NLIPRoutes(internalChat, httpClient)
     }
 }

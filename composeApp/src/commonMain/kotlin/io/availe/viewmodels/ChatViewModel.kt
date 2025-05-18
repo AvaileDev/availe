@@ -3,6 +3,7 @@ package io.availe.viewmodels
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import io.availe.network.ChatRepository
+import io.ktor.http.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -17,12 +18,12 @@ class ChatViewModel(
     private val _messages = MutableStateFlow<List<UiMessage>>(emptyList())
     val messages: StateFlow<List<UiMessage>> = _messages.asStateFlow()
 
-    fun send(text: String, targetPort: Int) {
+    fun send(text: String, targetUrl: Url) {
         if (text.isBlank()) return
         _messages.update { it + UiMessage(text, fromAi = false) }
         viewModelScope.launch {
             val reply = try {
-                chatRepository.sendMessage(text, targetPort = targetPort)
+                chatRepository.sendMessage(text, targetUrl = targetUrl)
             } catch (e: Exception) {
                 "Error: ${e.message ?: "Unknown"}"
             }

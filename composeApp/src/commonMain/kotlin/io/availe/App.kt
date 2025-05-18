@@ -2,20 +2,20 @@ package io.availe
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.lightColorScheme
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import io.availe.components.ChatInputFieldContainer
-import io.availe.components.chatMessageThread.ChatThread
+import androidx.compose.ui.zIndex
+import io.availe.components.chat.ChatInputFieldContainer
+import io.availe.components.chat.ChatThread
 import io.availe.config.ClientProvider
 import io.availe.network.KtorChatRepository
 import io.availe.util.getScreenWidthDp
 import io.availe.viewmodels.ChatViewModel
+import io.ktor.http.*
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable
@@ -30,45 +30,60 @@ fun App() {
         screenWidth < 840.dp -> .7f
         else -> .63f
     }
-    var useInternal: Boolean by remember { mutableStateOf(false) }
     var textContent: String by remember { mutableStateOf("") }
     val chatRepository = remember { KtorChatRepository(httpClient) }
     val chatViewModel = remember { ChatViewModel(chatRepository) }
-    var serverPort: String by remember { mutableStateOf(SERVER_PORT.toString()) }
+    var targetUrl: String by remember { mutableStateOf("http://localhost:8080/nlip") }
+
+    val snackbarHostState = remember { SnackbarHostState() }
 
     MaterialTheme(colorScheme = lightColorScheme()) {
-        Surface {
-            Column(
+        Scaffold(
+            snackbarHost = {
+                SnackbarHost(
+                    hostState = snackbarHostState,
+                    modifier = Modifier.zIndex(1f).fillMaxWidth()
+
+                )
+            }
+        ) { innerPadding ->
+            Surface(
                 Modifier
                     .fillMaxSize()
-                    .padding(vertical = 12.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
+                    .padding(innerPadding)
             ) {
-                ChatThread(
-                    state = listState,
-                    responsiveWidth = responsiveWidth,
-                    viewModel = chatViewModel,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f)
-                )
-                Spacer(Modifier.height(8.dp))
-                ChatInputFieldContainer(
-                    modifier = Modifier.fillMaxWidth(responsiveWidth),
-                    textContent = textContent,
-                    onTextChange = { textContent = it },
-                    useInternal = useInternal,
-                    onToggleUseInternal = { useInternal = !useInternal },
-                    serverPort = serverPort,
-                    onServerPortChange = { serverPort = it },
-                    onSend = { message ->
-                        chatViewModel.send(
-                            message,
-                            targetPort = serverPort.toInt()
-                        )
-                        textContent = ""
-                    }
-                )
+                Column(
+                    Modifier
+                        .fillMaxSize()
+                        .padding(vertical = 12.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    ChatThread(
+                        state = listState,
+                        responsiveWidth = responsiveWidth,
+                        viewModel = chatViewModel,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f)
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    ChatInputFieldContainer(
+                        modifier = Modifier.fillMaxWidth(responsiveWidth),
+                        textContent = textContent,
+                        onTextChange = { textContent = it },
+                        targetUrl = targetUrl,
+                        onTargetUrlChange = { text, _ -> targetUrl = text },
+                        snackbarHostState = snackbarHostState,
+                        onSend = { message, url ->
+                            chatViewModel.send(
+                                message,
+                                targetUrl = Url(targetUrl)
+                            )
+                            textContent = ""
+                        }
+                    )
+
+                }
             }
         }
     }

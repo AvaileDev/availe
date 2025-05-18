@@ -84,6 +84,10 @@ kotlin {
     }
 }
 
+kotlin.sourceSets.matching { it.name.endsWith("Main") && it.name != "commonMain" }.all {
+    dependencies { implementation(projects.shared) }
+}
+
 android {
     namespace = "io.availe"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
@@ -136,4 +140,8 @@ tasks.withType<ComposeHotRun>().configureEach {
             vendor.set(JvmVendorSpec.JETBRAINS)
         }
     )
+}
+
+tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
+    dependsOn(project(":shared").tasks.named("openApiGenerate"))
 }

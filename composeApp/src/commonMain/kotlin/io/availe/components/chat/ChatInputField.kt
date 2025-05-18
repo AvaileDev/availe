@@ -1,4 +1,4 @@
-package io.availe.components
+package io.availe.components.chat
 
 import StandardVerticalScrollbar
 import androidx.compose.foundation.background
@@ -7,18 +7,17 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import io.ktor.http.*
 
 private val MIN_HEIGHT = 100.dp
 private val MAX_HEIGHT = 200.dp
@@ -76,50 +75,31 @@ fun ChatInputField(
 }
 
 @Composable
-fun ChatInputFieldContainer(
-    modifier: Modifier = Modifier,
-    textContent: String,
-    onTextChange: (String) -> Unit,
-    useInternal: Boolean,
-    onToggleUseInternal: () -> Unit,
-    onSend: (String) -> Unit,
-    serverPort: String,
-    onServerPortChange: (String) -> Unit
-) {
-    Column(modifier) {
-        ChatInputField(text = textContent, onTextChange = onTextChange)
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-            FourDigitInputBox(serverPort, onServerPortChange)
-
-            Button(
-                onClick = { onSend(textContent) },
-                enabled = textContent.isNotBlank()
-            ) {
-                Text("Send")
-            }
-        }
-    }
-}
-
-@Composable
-fun FourDigitInputBox(
-    serverPort: String,
-    onServerPortChange: (String) -> Unit
+fun UrlInputBox(
+    targetUrl: String,
+    onTargetUrlChange: (String, Url?) -> Unit,
+    error: String? = null
 ) {
     TextField(
-        value = serverPort,
+        value = targetUrl,
         onValueChange = { input ->
-            if (input.length <= 4 && input.all { it.isDigit() }) {
-                onServerPortChange(input)
+            val cleaned = input.trim()
+            val parsedUrl = try {
+                Url(cleaned)
+            } catch (e: Exception) {
+                null
             }
+            onTargetUrlChange(input, parsedUrl)
         },
-        modifier = Modifier
-            .width(80.dp)
-            .height(48.dp),
+        modifier = Modifier.fillMaxWidth(),
         singleLine = true,
-        textStyle = TextStyle(fontSize = 12.sp),
+        label = { Text("Enter URL") },
         keyboardOptions = KeyboardOptions.Default.copy(
-            keyboardType = KeyboardType.Number
+            keyboardType = KeyboardType.Uri
         ),
+        isError = error != null
     )
+    if (error != null) {
+        Text(text = error, color = Color.Red)
+    }
 }

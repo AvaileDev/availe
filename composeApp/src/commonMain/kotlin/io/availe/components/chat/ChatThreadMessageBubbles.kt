@@ -1,4 +1,4 @@
-package io.availe.components.chatMessageThread
+package io.availe.components.chat
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement

@@ -1,5 +1,4 @@
 import nu.studer.gradle.jooq.JooqEdition
-import org.jetbrains.kotlin.gradle.internal.KaptGenerateStubsTask
 import org.jooq.meta.jaxb.Logging
 
 
@@ -37,9 +36,19 @@ plugins {
     alias(libs.plugins.jooq)
     alias(libs.plugins.flyway)
     alias(libs.plugins.shadow)
-    alias(libs.plugins.openapi.generator)
     id("org.jetbrains.kotlin.kapt")
     application
+}
+
+sourceSets {
+    named("test") {
+        // makes shared/src/commonMain/resources visible to JUnit tests
+        resources.srcDir(
+            project(":shared")
+                .projectDir
+                .resolve("src/commonMain/resources")
+        )
+    }
 }
 
 kotlin {
@@ -69,11 +78,11 @@ dependencies {
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.ktor.client.content.negotiation)
     implementation(libs.ktor.serialization.kotlinx.json)
-    implementation("io.ktor:ktor-server-content-negotiation:${libs.versions.ktor.get()}")
     implementation(libs.ktor.client.core)
     implementation(libs.ktor.client.cio)
     implementation(libs.logback)
     implementation(libs.ktor.client.logging)
+    implementation(libs.ktor.server.content.negotiation)
 
     testImplementation(libs.ktor.server.test.host)
     testImplementation(libs.kotlin.test.junit)
@@ -142,67 +151,26 @@ flyway {
     cleanDisabled = false
 }
 
-/** ------------- OpenAPI Code Gen ------------- */
-
-openApiGenerate {
-    generatorName.set("kotlin")
-    inputSpec.set(layout.projectDirectory.file("src/main/resources/openapi/nlip-api.yaml").asFile.toString())
-    outputDir.set(layout.buildDirectory.dir("generated/openapi").get().toString())
-    apiPackage.set("io.availe.openapi.api")
-    modelPackage.set("io.availe.openapi.model")
-    library.set("jvm-ktor")
-    configOptions.set(
-        mapOf(
-            "serializationLibrary" to "kotlinx_serialization",
-            "dateLibrary" to "string"
-        )
-    )
-}
-
-// Add generated OpenAPI sources to the source sets
-sourceSets["main"].kotlin.srcDir(
-    layout.buildDirectory.dir("generated/openapi/src/main/kotlin")
-)
-
 /** ------------- Build hooks & helper tasks ------------- */
 
 // Always run Flyway before compiling Kotlin and generating jOOQ classes
 tasks.named("compileKotlin") {
-    dependsOn("flywayMigrate", "openApiGenerate")
+    dependsOn("flywayMigrate")
 }
 
-// Task to run EnumValuesSyncTest
 tasks.register<Test>("runEnumValuesSyncTest") {
     group = "verification"
-    description = "Runs EnumValuesSyncTest to verify enum values sync between OpenAPI and database"
+    description = "Verifies that our enums match the OpenAPI schema"
 
-    // Only include EnumValuesSyncTest
     filter {
         includeTestsMatching("io.availe.drift.EnumValuesSyncTest")
     }
 
-    // Set up timestamp file to track if schemas have changed
-    val timestampFile = layout.buildDirectory.file("tmp/openapi-last-modified.txt").get().asFile
-    val openApiFile = layout.projectDirectory.file("src/main/resources/openapi/nlip-api.yaml").asFile
+    val openApiFile = project(":shared")
+        .projectDir
+        .resolve("src/commonMain/resources/openapi/nlip-api.yaml")
 
-    // Only run if schemas have changed or timestamp file doesn't exist
-    onlyIf {
-        if (!timestampFile.exists()) {
-            return@onlyIf true
-        }
-
-        val lastModified = timestampFile.readText().toLongOrNull() ?: 0L
-        val currentModified = openApiFile.lastModified()
-
-        // Run if OpenAPI file has been modified
-        currentModified > lastModified
-    }
-
-    // After test runs, update the timestamp file
-    doLast {
-        timestampFile.parentFile.mkdirs()
-        timestampFile.writeText(openApiFile.lastModified().toString())
-    }
+    systemProperty("OPENAPI_SPEC_PATH", openApiFile.absolutePath)
 }
 
 // Always run Flyway before starting the server
@@ -233,6 +201,6 @@ tasks.named<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar>("shadowJ
     mergeServiceFiles()
 }
 
-tasks.withType<KaptGenerateStubsTask>().configureEach {
-    dependsOn("openApiGenerate")
+tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
+    dependsOn(project(":shared").tasks.named("openApiGenerate"))
 }

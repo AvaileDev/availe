@@ -1,40 +1,44 @@
 package io.availe.network
 
 import io.availe.SERVER_PORT
-import io.availe.models.ChatMessage
+import io.availe.models.ChatProxyRequest
+import io.availe.openapi.model.AllowedFormat
+import io.availe.openapi.model.NLIPRequest
 import io.ktor.client.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
-import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 import kotlin.uuid.ExperimentalUuidApi
-import kotlin.uuid.Uuid
 
 class KtorChatRepository(
     private val httpClient: HttpClient,
 ) : ChatRepository {
+    private val proxyUrl = Url("http://localhost:$SERVER_PORT/nlip")
+
     @OptIn(ExperimentalUuidApi::class, ExperimentalTime::class)
     override suspend fun sendMessage(
         text: String,
         conversationId: String?,
-        targetPort: Int
+        targetUrl: Url
     ): String {
-        val path = "/chat"
-
-        val message = ChatMessage(
-            id = Uuid.random().toString(),
-            senderId = "mobile-client",
-            textContent = text,
-            timeStamp = Clock.System.now().toEpochMilliseconds(),
-            conversationId = null
+        val nlipRequest = NLIPRequest(
+            messagetype = null,
+            format = AllowedFormat.text,
+            subformat = "English",
+            content = text,
+            label = null,
+            submessages = null
         )
 
+        val proxyReq = ChatProxyRequest(
+            targetUrl = targetUrl.toString(),
+            message = nlipRequest
+        )
 
-        val url = "http://localhost:$SERVER_PORT/$targetPort/chat"
-        return httpClient.post(url) {
+        return httpClient.post(proxyUrl) {
             contentType(ContentType.Application.Json)
-            setBody(message)
+            setBody(proxyReq)
         }.bodyAsText()
     }
 }
