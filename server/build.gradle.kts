@@ -40,17 +40,6 @@ plugins {
     application
 }
 
-sourceSets {
-    named("test") {
-        // makes shared/src/commonMain/resources visible to JUnit tests
-        resources.srcDir(
-            project(":shared")
-                .projectDir
-                .resolve("src/commonMain/resources")
-        )
-    }
-}
-
 kotlin {
     jvmToolchain(21)
 }
