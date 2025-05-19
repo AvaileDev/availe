@@ -1,11 +1,14 @@
 package io.availe
 
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
@@ -38,6 +41,7 @@ fun App() {
     val snackbarHostState = remember { SnackbarHostState() }
 
     MaterialTheme(colorScheme = lightColorScheme()) {
+        val focusManager = LocalFocusManager.current
         Scaffold(
             snackbarHost = {
                 SnackbarHost(
@@ -51,6 +55,9 @@ fun App() {
                 Modifier
                     .fillMaxSize()
                     .padding(innerPadding)
+                    .pointerInput(Unit) {                   // ←
+                        detectTapGestures { focusManager.clearFocus() }
+                    }
             ) {
                 Column(
                     Modifier

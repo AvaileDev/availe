@@ -1,26 +1,19 @@
 package io.availe.components.chat
 
-import StandardVerticalScrollbar
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Button
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import io.availe.utils.normaliseUrl
 import io.ktor.http.*
-
-private val MIN_HEIGHT = 100.dp
-private val MAX_HEIGHT = 200.dp
+import kotlinx.coroutines.launch
 
 @Composable
 fun ChatInputField(
@@ -28,50 +21,16 @@ fun ChatInputField(
     text: String,
     onTextChange: (String) -> Unit,
 ) {
-    val scrollState = rememberScrollState()
-    var textFieldHeight by remember { mutableStateOf(MIN_HEIGHT) }
-    val density = LocalDensity.current
-    val maxHeightPx = with(density) { MAX_HEIGHT.toPx() }
-    val minHeightPx = with(density) { MIN_HEIGHT.toPx() }
+    val maxLines = 5
 
-    Box(
-        modifier
-            .height(textFieldHeight)
-            .background(MaterialTheme.colorScheme.surfaceVariant)
-            .padding(10.dp)
-    ) {
-        Row(
-            modifier = Modifier,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            BasicTextField(
-                value = text,
-                onValueChange = onTextChange,
-                modifier = Modifier
-                    .weight(1f)
-                    .verticalScroll(scrollState)
-                    .fillMaxSize(),
-
-                /* Sets the height of the parent [Box container] explicitly.
-                We set the height of the parent from the child because otherwise,
-                the scrollbar fully expands the parents even when there's zero text. */
-                onTextLayout = { textLayoutResult ->
-                    val rawPxHeight = textLayoutResult.size.height.toFloat()
-
-                    /* Skip px-to-Dp conversion when possible.
-                    This can be expensive should a user paste a gigantic amount of text. */
-                    val newHeight = when {
-                        rawPxHeight >= maxHeightPx -> MAX_HEIGHT
-                        rawPxHeight <= minHeightPx -> MIN_HEIGHT
-                        else -> (rawPxHeight / density.density).dp
-                    }
-                    textFieldHeight = newHeight
-                }
-            )
-        }
-
-        StandardVerticalScrollbar(scrollState, Modifier.align(Alignment.CenterEnd))
-    }
+    TextFieldWithScrollbar(
+        value = text,
+        onValueChange = onTextChange,
+        modifier = modifier.fillMaxWidth(),
+        minLines = 1,
+        maxLines = maxLines,
+        placeholder = { Text("Type a message...") }
+    )
 }
 
 @Composable
@@ -101,5 +60,52 @@ fun UrlInputBox(
     )
     if (error != null) {
         Text(text = error, color = Color.Red)
+    }
+}
+
+@Composable
+fun ChatInputFieldContainer(
+    modifier: Modifier = Modifier,
+    textContent: String,
+    onTextChange: (String) -> Unit,
+    targetUrl: String,
+    onTargetUrlChange: (String, Url?) -> Unit,
+    snackbarHostState: SnackbarHostState,
+    onSend: (String, Url) -> Unit,
+) {
+    val coroutineScope = rememberCoroutineScope()
+    var urlError by remember { mutableStateOf<String?>(null) }
+
+    Column(modifier = modifier.imePadding()) {
+        ChatInputField(text = textContent, onTextChange = onTextChange)
+
+        Spacer(Modifier.padding(10.dp))
+
+        UrlInputBox(targetUrl, onTargetUrlChange, error = urlError)
+
+        Spacer(Modifier.padding(10.dp))
+
+        Button(
+            onClick = {
+                val parsed = try {
+                    normaliseUrl(targetUrl, ensureTrailingSlash = true)
+                } catch (e: Exception) {
+                    null
+                }
+                if (parsed != null) {
+                    urlError = null
+                    onSend(textContent, parsed)
+                } else {
+                    urlError = "Invalid URL"
+
+                    coroutineScope.launch {
+                        snackbarHostState.showSnackbar("Invalid URL!")
+                    }
+                }
+            },
+            enabled = textContent.isNotBlank()
+        ) {
+            Text("Send")
+        }
     }
 }
