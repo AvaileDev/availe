@@ -74,6 +74,10 @@ kotlin {
             implementation(libs.ktor.client.content.negotiation)
             implementation(libs.ktor.serialization.kotlinx.json)
             implementation(libs.kotlinx.serialization.json)
+            implementation(libs.filekit.core)
+            implementation(libs.filekit.dialogs.compose)
+            implementation(libs.filekit.coil)
+            implementation(libs.coil.compose)
         }
         desktopMain.dependencies {
             implementation(compose.desktop.currentOs)

@@ -1,4 +1,3 @@
-// file: io/availe/components/chat/TextFieldWithScrollbar.kt
 package io.availe.components.chat
 
 import StandardVerticalScrollbar

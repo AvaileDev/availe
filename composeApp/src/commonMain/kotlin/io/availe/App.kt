@@ -12,12 +12,16 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
+import coil3.ImageLoader
+import coil3.compose.setSingletonImageLoaderFactory
 import io.availe.components.chat.ChatInputFieldContainer
 import io.availe.components.chat.ChatThread
 import io.availe.config.ClientProvider
 import io.availe.network.KtorChatRepository
 import io.availe.util.getScreenWidthDp
 import io.availe.viewmodels.ChatViewModel
+import io.github.vinceglb.filekit.PlatformFile
+import io.github.vinceglb.filekit.coil.addPlatformFileSupport
 import io.ktor.http.*
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
@@ -38,7 +42,16 @@ fun App() {
     val chatViewModel = remember { ChatViewModel(chatRepository) }
     var targetUrl: String by remember { mutableStateOf("http://localhost:8080/nlip") }
 
+    var uploadedFiles by remember { mutableStateOf(listOf<PlatformFile>()) }
     val snackbarHostState = remember { SnackbarHostState() }
+
+    setSingletonImageLoaderFactory { context ->
+        ImageLoader.Builder(context)
+            .components {
+                addPlatformFileSupport()
+            }
+            .build()
+    }
 
     MaterialTheme(colorScheme = lightColorScheme()) {
         val focusManager = LocalFocusManager.current
@@ -87,6 +100,10 @@ fun App() {
                                 targetUrl = Url(targetUrl)
                             )
                             textContent = ""
+                        },
+                        uploadedFiles = uploadedFiles,
+                        onFileUploaded = { file ->
+                            uploadedFiles = uploadedFiles + file
                         }
                     )
 
