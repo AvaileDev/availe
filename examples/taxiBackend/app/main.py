@@ -1,3 +1,4 @@
+from .nlip_adapter import router as nlip_router
 from fastapi import FastAPI, Depends, HTTPException, Request
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse
@@ -132,3 +133,5 @@ def dashboard(request: Request):
 @app.get("/health")
 def health():
     return {"status": "ok"}
+
+app.include_router(nlip_router)
