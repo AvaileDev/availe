@@ -1,9 +1,10 @@
-FROM python:3.12-slim AS base
+FROM python:3.13-slim AS base
 WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 COPY app ./app
 COPY tests ./tests
+COPY app/sys_prompt.txt app/sys_prompt.txt
 COPY gen_models.sh .
 COPY nlip-api.yaml ./nlip-api.yaml
 RUN bash gen_models.sh

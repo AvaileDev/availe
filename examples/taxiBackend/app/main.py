@@ -11,41 +11,44 @@ import time
 
 Base.metadata.create_all(bind=engine)
 app = FastAPI(title="Tiny Taxi Backend")
-
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
-
 templates = Jinja2Templates(directory="app/templates")
-
 
 @app.post("/riders", response_model=schemas.RiderOut, status_code=201)
 def create_rider(payload: schemas.RiderCreate, db: Session = Depends(get_db)):
     return crud.create_rider(db, payload)
 
-
 @app.get("/riders", response_model=list[schemas.RiderOut])
 def riders(db: Session = Depends(get_db)):
     return crud.list_riders(db)
 
+@app.delete("/riders/{rider_id}", status_code=204)
+def remove_rider(rider_id: int, db: Session = Depends(get_db)):
+    crud.delete_rider(db, rider_id)
 
 @app.post("/drivers", response_model=schemas.DriverOut, status_code=201)
 def create_driver(payload: schemas.DriverCreate, db: Session = Depends(get_db)):
     return crud.create_driver(db, payload)
 
-
 @app.get("/drivers", response_model=list[schemas.DriverOut])
 def drivers(db: Session = Depends(get_db)):
     return crud.list_drivers(db)
 
+@app.delete("/drivers/{driver_id}", status_code=204)
+def remove_driver(driver_id: int, db: Session = Depends(get_db)):
+    crud.delete_driver(db, driver_id)
 
 @app.post("/trips", response_model=schemas.TripOut, status_code=201)
 def request_trip(payload: schemas.TripCreate, db: Session = Depends(get_db)):
     return crud.create_trip(db, payload)
 
-
 @app.get("/trips", response_model=list[schemas.TripOut])
 def trips(db: Session = Depends(get_db)):
     return crud.list_trips(db)
 
+@app.delete("/trips/{trip_id}", status_code=204)
+def remove_trip(trip_id: int, db: Session = Depends(get_db)):
+    crud.delete_trip(db, trip_id)
 
 @app.get("/trips/{trip_id}", response_model=schemas.TripOut)
 def trip_detail(trip_id: int, db: Session = Depends(get_db)):
@@ -54,25 +57,14 @@ def trip_detail(trip_id: int, db: Session = Depends(get_db)):
         raise HTTPException(404, "trip not found")
     return trip
 
-
 @app.post("/trips/{trip_id}/assign", response_model=schemas.TripOut)
-def assign(trip_id: int, driver_id: int | None = None, db: Session = Depends(get_db)):
-    try:
-        return crud.assign_driver(db, trip_id, driver_id)
-    except ValueError as e:
-        raise HTTPException(400, str(e))
-
+def assign(trip_id: int, driver_id: int | None = None, driver_name: str | None = None, db: Session = Depends(get_db)):
+    return crud.assign_driver(db, trip_id, driver_id, driver_name)
 
 @app.post("/trips/{trip_id}/ping", response_model=schemas.TripProgress)
 def ping(trip_id: int, db: Session = Depends(get_db)):
     trip = crud.ping_trip(db, trip_id)
-    return schemas.TripProgress(
-        id=trip.id,
-        remaining_km=trip.remaining_km,
-        status=trip.status,
-        complete=trip.status == models.TripStatus.ENDED,
-    )
-
+    return schemas.TripProgress(id=trip.id, remaining_km=trip.remaining_km, status=trip.status, complete=trip.status == models.TripStatus.ENDED)
 
 @app.post("/trips/{trip_id}/simulate", response_model=schemas.TripProgress)
 def simulate(trip_id: int, duration: int = 60, db: Session = Depends(get_db)):
@@ -100,13 +92,7 @@ def simulate(trip_id: int, duration: int = 60, db: Session = Depends(get_db)):
         trip.status = models.TripStatus.ENDED
         db.commit()
     db.refresh(trip)
-    return schemas.TripProgress(
-        id=trip.id,
-        remaining_km=trip.remaining_km,
-        status=trip.status,
-        complete=trip.status == models.TripStatus.ENDED,
-    )
-
+    return schemas.TripProgress(id=trip.id, remaining_km=trip.remaining_km, status=trip.status, complete=trip.status == models.TripStatus.ENDED)
 
 @app.post("/trips/{trip_id}/{action}", response_model=schemas.TripOut)
 def change_status(trip_id: int, action: models.TripStatus, db: Session = Depends(get_db)):
@@ -115,23 +101,21 @@ def change_status(trip_id: int, action: models.TripStatus, db: Session = Depends
         raise HTTPException(400, "invalid action")
     return crud.update_status(db, trip_id, action)
 
-
 @app.get("/dashboard.json")
 def dashboard_json(db: Session = Depends(get_db)):
-    return {
-        "riders": crud.list_riders(db),
-        "drivers": crud.list_drivers(db),
-        "trips": crud.list_trips(db),
-    }
-
+    return {"riders": crud.list_riders(db), "drivers": crud.list_drivers(db), "trips": crud.list_trips(db)}
 
 @app.get("/dashboard", response_class=HTMLResponse)
 def dashboard(request: Request):
     return templates.TemplateResponse("dashboard.html", {"request": request})
 
-
 @app.get("/health")
 def health():
     return {"status": "ok"}
+
+@app.post("/reset", status_code=202)
+def reset(db: Session = Depends(get_db)):
+    crud.reset_database(db)
+    return {"status": "reset ok"}
 
 app.include_router(nlip_router)
