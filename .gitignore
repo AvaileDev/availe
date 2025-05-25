@@ -18,4 +18,4 @@ captures
 **/xcshareddata/WorkspaceSettings.xcsettings
 .env*
 *.pyc
-examples/taxiBackend/taxi.db
+*.db
