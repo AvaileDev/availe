@@ -6,6 +6,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
@@ -33,24 +34,26 @@ fun ChatThread(
     val heightTracker = remember { HeightTracker() }
     LaunchedEffect(messages.size) { heightTracker.resize(messages.size) }
     Box(modifier = modifier.fillMaxSize()) {
-        LazyColumn(
-            state = state,
-            modifier = Modifier.fillMaxSize(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            contentPadding = PaddingValues(vertical = 12.dp)
-        ) {
-            itemsIndexed(
-                items = messages,
-                key = { _, uiMessage -> uiMessage.id }
-            ) { index, uiMessage ->
-                Box(
-                    Modifier
-                        .fillMaxWidth(responsiveWidth)
-                        .onGloballyPositioned { coords ->
-                            heightTracker.updateHeight(index, coords.size.height)
-                        }
-                ) {
-                    ChatThreadMessageRow(uiMessage)
+        SelectionContainer {
+            LazyColumn(
+                state = state,
+                modifier = Modifier.fillMaxSize(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                contentPadding = PaddingValues(vertical = 12.dp)
+            ) {
+                itemsIndexed(
+                    items = messages,
+                    key = { _, uiMessage -> uiMessage.id }
+                ) { index, uiMessage ->
+                    Box(
+                        Modifier
+                            .fillMaxWidth(responsiveWidth)
+                            .onGloballyPositioned { coords ->
+                                heightTracker.updateHeight(index, coords.size.height)
+                            }
+                    ) {
+                        ChatThreadMessageRow(uiMessage)
+                    }
                 }
             }
         }
