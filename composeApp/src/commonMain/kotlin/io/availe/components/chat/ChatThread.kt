@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
@@ -31,23 +32,25 @@ fun ChatThread(
     val messages by viewModel.messages.collectAsState()
 
     Box(modifier = modifier.fillMaxSize()) {
-        LazyColumn(
-            state = state,
-            modifier = Modifier.fillMaxSize(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            contentPadding = PaddingValues(vertical = 12.dp)
-        ) {
-            items(messages.size) { idx ->
-                Box(modifier = Modifier.fillMaxWidth(responsiveWidth)) {
-                    ChatThreadMessageRow(messages[idx])
+        SelectionContainer {
+            LazyColumn(
+                state = state,
+                modifier = Modifier.fillMaxSize(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                contentPadding = PaddingValues(vertical = 12.dp)
+            ) {
+                items(messages.size) { idx ->
+                    Box(modifier = Modifier.fillMaxWidth(responsiveWidth)) {
+                        ChatThreadMessageRow(messages[idx])
+                    }
                 }
             }
-        }
 
-        StandardVerticalScrollbar(
-            listState = state,
-            modifier = Modifier.align(Alignment.CenterEnd)
-        )
+            StandardVerticalScrollbar(
+                listState = state,
+                modifier = Modifier.align(Alignment.CenterEnd)
+            )
+        }
     }
 }
 
