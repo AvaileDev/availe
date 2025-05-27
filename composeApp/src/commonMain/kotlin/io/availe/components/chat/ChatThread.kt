@@ -41,16 +41,13 @@ fun ChatThread(
         ) {
             itemsIndexed(
                 items = messages,
-                key = { messageIndex, _ -> messageIndex }
-            ) { messageIndex, uiMessage ->
+                key = { _, uiMessage -> uiMessage.id }
+            ) { index, uiMessage ->
                 Box(
                     Modifier
                         .fillMaxWidth(responsiveWidth)
-                        .onGloballyPositioned { layoutCoordinates ->
-                            heightTracker.updateHeight(
-                                messageIndex,
-                                layoutCoordinates.size.height
-                            )
+                        .onGloballyPositioned { coords ->
+                            heightTracker.updateHeight(index, coords.size.height)
                         }
                 ) {
                     ChatThreadMessageRow(uiMessage)
