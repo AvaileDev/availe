@@ -1,12 +1,16 @@
 # Tiny Taxi Backend
 
-A minimal FastAPI + SQLite taxi-hailing backend with simulated vehicle progress. Fully containerized, just add Docker.
+A minimal FastAPI + SQLite taxi-hailing backend with simulated vehicle progress.
 
 ## Quick Start
 
 ```bash
-docker build -t taxi-backend .
-docker run --rm -p 7788:7788 taxi-backend
+poetry config virtualenvs.in-project true
+poetry install
+```
+
+```bash
+poetry run uvicorn app.main:app --host 0.0.0.0 --port 7788 --reload
 ```
 
 - Swagger UI: http://localhost:7788/docs
@@ -60,23 +64,5 @@ curl -X POST "localhost:7788/trips/$trip_id/simulate?duration=180"
 ## Run Tests
 
 ```bash
-docker run --rm taxi-backend pytest
+poetry run pytest
 ```
-
-## Endpoints
-
-| Method | Path                        | Description                                             |
-|--------|-----------------------------|---------------------------------------------------------|
-| POST   | `/riders`                   | Create rider                                            |
-| GET    | `/riders`                   | List riders                                             |
-| POST   | `/drivers`                  | Create driver                                           |
-| GET    | `/drivers`                  | List drivers                                            |
-| POST   | `/trips`                    | Create trip                                             |
-| GET    | `/trips`                    | List trips                                              |
-| GET    | `/trips/{trip_id}`          | Trip details                                            |
-| POST   | `/trips/{trip_id}/assign`   | Assign or auto-assign driver                            |
-| POST   | `/trips/{trip_id}/{action}` | Manually update status (`accepted`, `started`, `ended`) |
-| POST   | `/trips/{trip_id}/ping`     | Single progress tick (subtract 0.5 – 2 km)              |
-| POST   | `/trips/{trip_id}/simulate` | Auto-progress for given duration (seconds)              |
-| GET    | `/dashboard`                | Snapshot of all data                                    |
-| GET    | `/health`                   | Health check                                            |
