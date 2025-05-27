@@ -1,6 +1,5 @@
 package io.availe.components.chat
 
-import StandardVerticalScrollbar
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -23,6 +22,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
+import io.availe.components.StandardVerticalScrollbar
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

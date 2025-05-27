@@ -1,24 +1,24 @@
 package io.availe.components.chat
 
-import StandardVerticalScrollbar
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import io.availe.components.HeightTracker
+import io.availe.components.StandardVerticalScrollbar
 import io.availe.viewmodels.ChatViewModel
 import io.availe.viewmodels.UiMessage
 
@@ -30,27 +30,41 @@ fun ChatThread(
     modifier: Modifier = Modifier
 ) {
     val messages by viewModel.messages.collectAsState()
-
+    val heightTracker = remember { HeightTracker() }
+    LaunchedEffect(messages.size) { heightTracker.resize(messages.size) }
     Box(modifier = modifier.fillMaxSize()) {
-        SelectionContainer {
-            LazyColumn(
-                state = state,
-                modifier = Modifier.fillMaxSize(),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                contentPadding = PaddingValues(vertical = 12.dp)
-            ) {
-                items(messages.size) { idx ->
-                    Box(modifier = Modifier.fillMaxWidth(responsiveWidth)) {
-                        ChatThreadMessageRow(messages[idx])
-                    }
+        LazyColumn(
+            state = state,
+            modifier = Modifier.fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            contentPadding = PaddingValues(vertical = 12.dp)
+        ) {
+            itemsIndexed(
+                items = messages,
+                key = { messageIndex, _ -> messageIndex }
+            ) { messageIndex, uiMessage ->
+                Box(
+                    Modifier
+                        .fillMaxWidth(responsiveWidth)
+                        .onGloballyPositioned { layoutCoordinates ->
+                            heightTracker.updateHeight(
+                                messageIndex,
+                                layoutCoordinates.size.height
+                            )
+                        }
+                ) {
+                    ChatThreadMessageRow(uiMessage)
                 }
             }
-
-            StandardVerticalScrollbar(
-                listState = state,
-                modifier = Modifier.align(Alignment.CenterEnd)
-            )
         }
+        StandardVerticalScrollbar(
+            listState = state,
+            heights = heightTracker,
+            modifier = Modifier
+                .align(Alignment.CenterEnd)
+                .fillMaxHeight()
+                .width(8.dp)
+        )
     }
 }
 
