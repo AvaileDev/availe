@@ -6,6 +6,7 @@ OUT_DIR="build"
 OUT_FILE="${OUT_DIR}/nlip_models.py"
 
 mkdir -p "${OUT_DIR}"
+touch "${OUT_DIR}/__init__.py"
 
 python -m datamodel_code_generator \
   --input             "${SPEC_ROOT}" \

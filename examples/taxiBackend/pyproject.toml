@@ -6,7 +6,8 @@ authors = ["availe <availe@users.noreply.github.com>"]
 license = "MIT"
 readme = "README.md"
 packages = [
-    { include = "app" }
+    { include = "app" },
+    { include = "build" }
 ]
 
 [tool.poetry.dependencies]
