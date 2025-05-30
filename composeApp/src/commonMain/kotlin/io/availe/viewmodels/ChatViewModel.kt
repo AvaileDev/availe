@@ -34,16 +34,12 @@ class ChatViewModel(
     init {
         scope.launch {
             // Fetch available sessions
-            repository.getAllSessions()
-                .fold(
-                    { /* handle error if needed */ },
-                    { /* success */ }
-                )
+            refreshSessions()
 
             // Create default session if needed
             repository.createSession()
                 .fold(
-                    { /* handle error if needed */ },
+                    { error -> println("Error creating default session: ${error.message}") },
                     { /* success */ }
                 )
 
@@ -54,6 +50,33 @@ class ChatViewModel(
                 } else {
                     _messages.value = emptyList()
                 }
+            }
+
+            // Start periodic refresh of sessions
+            startPeriodicSessionRefresh()
+        }
+    }
+
+    /**
+     * Refreshes the list of available sessions from the server
+     */
+    private suspend fun refreshSessions() {
+        println("ChatViewModel: Refreshing sessions...")
+        repository.getAllSessions()
+            .fold(
+                { error -> println("Error fetching sessions: ${error.message}") },
+                { sessions -> println("ChatViewModel: Sessions refreshed, count: ${sessions.size}") }
+            )
+    }
+
+    /**
+     * Starts a periodic refresh of sessions to keep in sync with the server
+     */
+    private fun startPeriodicSessionRefresh() {
+        scope.launch {
+            while (true) {
+                kotlinx.coroutines.delay(10000) // Refresh every 10 seconds
+                refreshSessions()
             }
         }
     }

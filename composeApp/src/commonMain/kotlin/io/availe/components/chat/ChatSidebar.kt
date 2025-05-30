@@ -11,6 +11,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -32,6 +33,11 @@ fun ChatSidebar(
     val currentSessionId by viewModel.currentSessionId.collectAsState()
     val isCreatingSession by viewModel.isCreatingSession.collectAsState()
     val coroutineScope = rememberCoroutineScope()
+
+    // Debug logging for sessions
+    LaunchedEffect(availableSessions) {
+        println("ChatSidebar: Available sessions: $availableSessions")
+    }
 
     val sidebarWidth = 250.dp
     val collapsedWidth = 48.dp
