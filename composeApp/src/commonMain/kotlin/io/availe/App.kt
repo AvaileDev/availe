@@ -16,7 +16,7 @@ import coil3.ImageLoader
 import coil3.compose.setSingletonImageLoaderFactory
 import io.availe.components.chat.ChatInputFieldContainer
 import io.availe.components.chat.ChatThread
-import io.availe.config.ClientProvider
+import io.availe.config.HttpClientProvider
 import io.availe.repositories.KtorChatRepository
 import io.availe.util.getScreenWidthDp
 import io.availe.viewmodels.ChatViewModel
@@ -27,7 +27,7 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 @Composable
 @Preview
 fun App() {
-    val httpClient = ClientProvider.client
+    val httpClient = HttpClientProvider.client
 
     val listState = rememberLazyListState()
     val screenWidth: Dp = getScreenWidthDp()

@@ -1,6 +1,6 @@
 package io.availe
 
-import io.availe.config.ClientProvider
+import io.availe.config.HttpClientProvider
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.server.application.*
@@ -17,7 +17,7 @@ fun main() {
 }
 
 fun Application.module() {
-    val httpClient = ClientProvider.client
+    val httpClient = HttpClientProvider.client
 
     routing {
         post("/compileSpec") {

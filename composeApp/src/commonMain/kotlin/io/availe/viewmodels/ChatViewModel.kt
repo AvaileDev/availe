@@ -1,5 +1,6 @@
 package io.availe.viewmodels
 
+import arrow.core.flatMap
 import io.availe.models.InternalMessage
 import io.availe.repositories.KtorChatRepository
 import io.ktor.http.*
@@ -21,14 +22,26 @@ class ChatViewModel(
     init {
         scope.launch {
             repository.createSession()
-            _messages.value = repository.getHistory()
+                .fold(
+                    { /* handle error if needed */ },
+                    { /* success */ }
+                )
+            repository.getHistory()
+                .fold(
+                    { _messages.value = emptyList() },
+                    { history -> _messages.value = history }
+                )
         }
     }
 
     fun send(text: String, targetUrl: Url) {
         scope.launch {
             repository.sendMessage(text, targetUrl)
-            _messages.value = repository.getHistory()
+                .flatMap { repository.getHistory() }
+                .fold(
+                    { _messages.value = emptyList() },
+                    { history -> _messages.value = history }
+                )
         }
     }
 }

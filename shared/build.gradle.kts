@@ -58,9 +58,14 @@ kotlin {
                 implementation(libs.ktor.client.content.negotiation)
             }
         }
-
         jvmMain.dependencies {
             implementation(libs.ktor.client.cio)
+        }
+        wasmJsMain.dependencies {
+            implementation(libs.ktor.client.js)
+        }
+        iosMain.dependencies {
+            implementation(libs.ktor.client.darwin)
         }
     }
 }

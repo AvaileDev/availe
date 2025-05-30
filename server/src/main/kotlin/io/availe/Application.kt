@@ -2,7 +2,7 @@ package io.availe
 
 import io.availe.client.NLIPClient
 import io.availe.client.OllamaClient
-import io.availe.config.ClientProvider
+import io.availe.config.HttpClientProvider
 import io.availe.routes.chatProxyRoutes
 import io.availe.routes.chatServiceRoutes
 import io.availe.routes.healthRoutes
@@ -44,7 +44,7 @@ fun Application.module() {
             )
         }
     }
-    val httpClient = ClientProvider.client
+    val httpClient = HttpClientProvider.client
     val internalChat = OllamaClient(httpClient)
     val externalChat = NLIPClient(httpClient, Url("http://localhost:8004"))
     routing {

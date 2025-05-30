@@ -78,11 +78,16 @@ kotlin {
             implementation(libs.filekit.dialogs.compose)
             implementation(libs.filekit.coil)
             implementation(libs.coil.compose)
+            implementation(libs.arrow.kt.arrow.core)
+            implementation(libs.arrow.fx.coroutines)
         }
         desktopMain.dependencies {
             implementation(compose.desktop.currentOs)
             implementation(libs.kotlinx.coroutines.swing)
             implementation(libs.logback)
+        }
+        wasmJsMain.dependencies {
+            implementation(libs.ktor.client.js)
         }
     }
 }
