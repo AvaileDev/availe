@@ -20,8 +20,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import io.availe.components.HeightTracker
 import io.availe.components.StandardVerticalScrollbar
+import io.availe.models.InternalMessage
 import io.availe.viewmodels.ChatViewModel
-import io.availe.viewmodels.UiMessage
 
 @Composable
 fun ChatThread(
@@ -41,10 +41,7 @@ fun ChatThread(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 contentPadding = PaddingValues(vertical = 12.dp)
             ) {
-                itemsIndexed(
-                    items = messages,
-                    key = { _, uiMessage -> uiMessage.id }
-                ) { index, uiMessage ->
+                itemsIndexed(items = messages, key = { _, m -> m.id }) { index, m ->
                     Box(
                         Modifier
                             .fillMaxWidth(responsiveWidth)
@@ -52,7 +49,7 @@ fun ChatThread(
                                 heightTracker.updateHeight(index, coords.size.height)
                             }
                     ) {
-                        ChatThreadMessageRow(uiMessage)
+                        ChatThreadMessageRow(m)
                     }
                 }
             }
@@ -68,10 +65,9 @@ fun ChatThread(
     }
 }
 
-// Decides whether to show a user or AI message
 @Composable
-fun ChatThreadMessageRow(message: UiMessage) {
-    val isAi = message.fromAi
+fun ChatThreadMessageRow(message: InternalMessage) {
+    val isAi = message.senderRole != InternalMessage.Role.USER
 
     Row(
         modifier = Modifier
@@ -80,9 +76,9 @@ fun ChatThreadMessageRow(message: UiMessage) {
         horizontalArrangement = if (isAi) Arrangement.Start else Arrangement.End
     ) {
         if (isAi) {
-            ChatThreadAiText(message.text)
+            ChatThreadAiText(message.nlipMessage.content)
         } else {
-            ChatThreadUserBubble(message.text)
+            ChatThreadUserBubble(message.nlipMessage.content)
         }
     }
 }
@@ -106,8 +102,7 @@ fun ChatThreadUserBubble(message: String) {
             containerColor = MaterialTheme.colorScheme.primaryContainer
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
-        modifier = Modifier
-            .fillMaxWidth(0.65f)
+        modifier = Modifier.fillMaxWidth(0.65f)
     ) {
         Text(
             text = message,

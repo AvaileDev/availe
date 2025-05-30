@@ -17,12 +17,11 @@ import coil3.compose.setSingletonImageLoaderFactory
 import io.availe.components.chat.ChatInputFieldContainer
 import io.availe.components.chat.ChatThread
 import io.availe.config.ClientProvider
-import io.availe.network.KtorChatRepository
+import io.availe.repositories.KtorChatRepository
 import io.availe.util.getScreenWidthDp
 import io.availe.viewmodels.ChatViewModel
 import io.github.vinceglb.filekit.PlatformFile
 import io.github.vinceglb.filekit.coil.addPlatformFileSupport
-import io.ktor.http.*
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable
@@ -60,7 +59,6 @@ fun App() {
                 SnackbarHost(
                     hostState = snackbarHostState,
                     modifier = Modifier.zIndex(1f).fillMaxWidth()
-
                 )
             }
         ) { innerPadding ->
@@ -68,7 +66,7 @@ fun App() {
                 Modifier
                     .fillMaxSize()
                     .padding(innerPadding)
-                    .pointerInput(Unit) {                   // ←
+                    .pointerInput(Unit) {
                         detectTapGestures { focusManager.clearFocus() }
                     }
             ) {
@@ -95,10 +93,7 @@ fun App() {
                         onTargetUrlChange = { text, _ -> targetUrl = text },
                         snackbarHostState = snackbarHostState,
                         onSend = { message, url ->
-                            chatViewModel.send(
-                                message,
-                                targetUrl = Url(targetUrl)
-                            )
+                            chatViewModel.send(message, url)
                             textContent = ""
                         },
                         uploadedFiles = uploadedFiles,
@@ -106,7 +101,6 @@ fun App() {
                             uploadedFiles = uploadedFiles + file
                         }
                     )
-
                 }
             }
         }

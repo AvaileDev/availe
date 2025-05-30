@@ -72,6 +72,10 @@ dependencies {
     implementation(libs.logback)
     implementation(libs.ktor.client.logging)
     implementation(libs.ktor.server.content.negotiation)
+    implementation(libs.arrow.core)
+    implementation(libs.kotlinx.collections.immutable)
+    implementation(libs.ktor.server.cors.jvm)
+    implementation(libs.ktor.server.status.pages.jvm)
 
     testImplementation(libs.ktor.server.test.host)
     testImplementation(libs.kotlin.test.junit)

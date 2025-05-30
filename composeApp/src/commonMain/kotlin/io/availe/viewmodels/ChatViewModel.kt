@@ -1,66 +1,34 @@
 package io.availe.viewmodels
 
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
-import io.availe.network.ChatRepository
+import io.availe.models.InternalMessage
+import io.availe.repositories.KtorChatRepository
 import io.ktor.http.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlin.time.TimeSource
-import kotlin.uuid.ExperimentalUuidApi
-import kotlin.uuid.Uuid
-
-data class UiMessage(
-    val id: String,
-    val text: String,
-    val fromAi: Boolean,
-    val timeStamp: Long,
-    val isPending: Boolean = false,
-    val isError: Boolean = false
-)
 
 class ChatViewModel(
-    private val chatRepository: ChatRepository
-) : ViewModel() {
-    private val _messages = MutableStateFlow<List<UiMessage>>(emptyList())
-    val messages: StateFlow<List<UiMessage>> = _messages.asStateFlow()
+    private val repository: KtorChatRepository
+) {
+    private val _messages = MutableStateFlow<List<InternalMessage>>(emptyList())
+    val messages: StateFlow<List<InternalMessage>> = _messages.asStateFlow()
+    private val scope = CoroutineScope(Dispatchers.Main + Job())
 
-    private fun now() = TimeSource.Monotonic.markNow().elapsedNow().inWholeMilliseconds
-
-    @OptIn(ExperimentalUuidApi::class)
-    fun send(text: String, targetUrl: Url) {
-        if (text.isBlank()) return
-        val userMsgId = Uuid.random().toString()
-        _messages.update { list ->
-            list + UiMessage(
-                id = userMsgId,
-                text = text,
-                fromAi = false,
-                timeStamp = now(),
-                isPending = true
-            )
+    init {
+        scope.launch {
+            repository.createSession()
+            _messages.value = repository.getHistory()
         }
-        viewModelScope.launch {
-            val reply = try {
-                chatRepository.sendMessage(text, conversationId = null, targetUrl = targetUrl)
-            } catch (e: Exception) {
-                _messages.update { list ->
-                    list.map { if (it.id == userMsgId) it.copy(isPending = false, isError = true) else it }
-                }
-                return@launch
-            }
-            _messages.update { list ->
-                list.map { if (it.id == userMsgId) it.copy(isPending = false) else it } +
-                        UiMessage(
-                            id = Uuid.random().toString(),
-                            text = reply,
-                            fromAi = true,
-                            timeStamp = now()
-                        )
-            }
+    }
+
+    fun send(text: String, targetUrl: Url) {
+        scope.launch {
+            repository.sendMessage(text, targetUrl)
+            _messages.value = repository.getHistory()
         }
     }
 }

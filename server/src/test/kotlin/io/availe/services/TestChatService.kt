@@ -5,13 +5,13 @@ import io.availe.models.BranchId
 import io.availe.models.InternalMessage
 import io.availe.models.Session
 
-object ChatService {
+class TestChatService {
     private val sessionStore = InMemorySessionStore()
 
-    suspend fun getSession(sessionIdentifier: String): Either<ChatError, Session> =
+    fun getSession(sessionIdentifier: String): Either<ChatError, Session> =
         sessionStore.get(sessionIdentifier)
 
-    suspend fun getAllSessionIdentifiers(): List<String> =
+    fun getAllSessionIdentifiers(): List<String> =
         sessionStore.getAllSessionIds()
 
     suspend fun createSession(session: Session): Either<ChatError, Unit> =

@@ -1,3 +1,10 @@
 package io.availe
 
-const val SERVER_PORT = 8080
+val SELF_HOSTS = setOf(
+    "localhost",
+    "127.0.0.1",
+    "::1"
+)
+
+const val SELF_PORT = 8080
+
