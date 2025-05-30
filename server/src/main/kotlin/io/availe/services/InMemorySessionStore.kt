@@ -151,4 +151,22 @@ class InMemorySessionStore(
         data[sessionId]?.session?.right() ?: ChatError.SessionNotFound(sessionId).left()
 
     fun getAllSessionIds(): List<String> = data.keys.toList()
+
+    /**
+     * Updates the title of a session
+     * @param sessionId ID of the session to update
+     * @param newTitle New title for the session
+     * @return Either with potential error or Unit on success
+     */
+    suspend fun updateSessionTitle(sessionId: String, newTitle: String): Either<ChatError, Unit> = storeMutex.withLock {
+        either {
+            val state = data[sessionId] ?: raise(ChatError.SessionNotFound(sessionId))
+            state.lock.withLock {
+                state.session = state.session.copy(
+                    title = newTitle,
+                    lastActivityAt = System.currentTimeMillis()
+                )
+            }
+        }
+    }
 }

@@ -35,6 +35,9 @@ class KtorChatRepository(private val client: HttpClient) {
     @Serializable
     private data class CreateSessionRequest(val session: Session)
 
+    @Serializable
+    private data class UpdateSessionTitleRequest(val title: String)
+
     init {
         // Initialize with default session if available
         println("KtorChatRepository: Initializing with default session")
@@ -224,4 +227,25 @@ class KtorChatRepository(private val client: HttpClient) {
                 }
             }
     }
+
+    /**
+     * Updates the title of a session
+     * @param sessionId ID of the session to update
+     * @param newTitle New title for the session
+     * @return Either with potential error or Unit on success
+     */
+    suspend fun updateSessionTitle(sessionId: String, newTitle: String): Either<Throwable, Unit> =
+        Either.catch {
+            val response = client.put("$sessionsUrl/$sessionId/title") {
+                contentType(ContentType.Application.Json)
+                setBody(UpdateSessionTitleRequest(newTitle))
+            }
+
+            if (!response.status.isSuccess()) {
+                throw RuntimeException("Failed to update session title: ${response.status}")
+            }
+        }.flatMap {
+            // Update available sessions to reflect any changes
+            getAllSessions().map { }
+        }
 }

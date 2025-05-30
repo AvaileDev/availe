@@ -53,4 +53,16 @@ object ChatService {
         sessionIdentifier: String
     ): Either<ChatError, Map<BranchId, List<InternalMessage>>> =
         sessionStore.snapshotBranches(sessionIdentifier)
+
+    /**
+     * Updates the title of a session
+     * @param sessionIdentifier ID of the session to update
+     * @param newTitle New title for the session
+     * @return Either with potential error or Unit on success
+     */
+    suspend fun updateSessionTitle(
+        sessionIdentifier: String,
+        newTitle: String
+    ): Either<ChatError, Unit> =
+        sessionStore.updateSessionTitle(sessionIdentifier, newTitle)
 }

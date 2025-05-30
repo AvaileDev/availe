@@ -11,14 +11,12 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import arrow.core.Either
 import io.availe.viewmodels.ChatViewModel
 import kotlinx.coroutines.launch
 
@@ -103,15 +101,27 @@ fun ChatSidebar(
                                 sessionId = sessionId,
                                 isSelected = sessionId == currentSessionId,
                                 onSessionSelected = { viewModel.selectSession(sessionId) },
-                                onSessionDeleted = { 
+                                onSessionDeleted = {
                                     coroutineScope.launch {
                                         viewModel.deleteSession(sessionId)
                                             .fold(
-                                                { error -> 
+                                                { error ->
                                                     // Handle error (could show a snackbar or other UI feedback)
                                                     println("Error deleting session: ${error.message}")
                                                 },
                                                 { /* Session deleted successfully */ }
+                                            )
+                                    }
+                                },
+                                onSessionRenamed = { newTitle ->
+                                    coroutineScope.launch {
+                                        viewModel.renameSession(sessionId, newTitle)
+                                            .fold(
+                                                { error ->
+                                                    // Handle error (could show a snackbar or other UI feedback)
+                                                    println("Error renaming session: ${error.message}")
+                                                },
+                                                { /* Session renamed successfully */ }
                                             )
                                     }
                                 }
@@ -146,9 +156,12 @@ private fun SessionItem(
     sessionId: String,
     isSelected: Boolean,
     onSessionSelected: () -> Unit,
-    onSessionDeleted: () -> Unit
+    onSessionDeleted: () -> Unit,
+    onSessionRenamed: (String) -> Unit = {}
 ) {
     var showDeleteConfirmation by remember { mutableStateOf(false) }
+    var showRenameDialog by remember { mutableStateOf(false) }
+    var newTitle by remember { mutableStateOf("") }
 
     val backgroundColor = if (isSelected) {
         MaterialTheme.colorScheme.primaryContainer
@@ -169,15 +182,30 @@ private fun SessionItem(
         Text(
             text = "Session ${sessionId.take(8)}...",
             style = MaterialTheme.typography.bodyMedium,
-            color = if (isSelected) 
-                MaterialTheme.colorScheme.onPrimaryContainer 
-            else 
+            color = if (isSelected)
+                MaterialTheme.colorScheme.onPrimaryContainer
+            else
                 MaterialTheme.colorScheme.onSurfaceVariant,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier.weight(1f)
         )
 
+        // Rename button
+        TextButton(
+            onClick = {
+                newTitle = ""
+                showRenameDialog = true
+            },
+            modifier = Modifier.padding(start = 4.dp),
+            colors = ButtonDefaults.textButtonColors(
+                contentColor = MaterialTheme.colorScheme.primary
+            )
+        ) {
+            Text("Rename", style = MaterialTheme.typography.bodySmall)
+        }
+
+        // Delete button
         TextButton(
             onClick = { showDeleteConfirmation = true },
             modifier = Modifier.padding(start = 4.dp),
@@ -209,6 +237,45 @@ private fun SessionItem(
             },
             dismissButton = {
                 OutlinedButton(onClick = { showDeleteConfirmation = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+
+    // Rename dialog
+    if (showRenameDialog) {
+        AlertDialog(
+            onDismissRequest = { showRenameDialog = false },
+            title = { Text("Rename Session") },
+            text = {
+                Column {
+                    Text("Enter a new title for this session:")
+                    Spacer(modifier = Modifier.height(8.dp))
+                    OutlinedTextField(
+                        value = newTitle,
+                        onValueChange = { newTitle = it },
+                        placeholder = { Text("New title") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        if (newTitle.isNotBlank()) {
+                            onSessionRenamed(newTitle)
+                        }
+                        showRenameDialog = false
+                    },
+                    enabled = newTitle.isNotBlank()
+                ) {
+                    Text("Rename")
+                }
+            },
+            dismissButton = {
+                OutlinedButton(onClick = { showRenameDialog = false }) {
                     Text("Cancel")
                 }
             }

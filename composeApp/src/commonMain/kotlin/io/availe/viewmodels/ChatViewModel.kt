@@ -145,4 +145,24 @@ class ChatViewModel(
         }
         Unit
     }
+
+    /**
+     * Renames a session by ID
+     * @param sessionId ID of the session to rename
+     * @param newTitle New title for the session
+     * @return Either with potential error or Unit on success
+     */
+    fun renameSession(sessionId: String, newTitle: String): Either<Throwable, Unit> = either {
+        scope.launch {
+            repository.updateSessionTitle(sessionId, newTitle)
+                .fold(
+                    { error -> 
+                        // Log error or handle it appropriately
+                        println("Error renaming session: ${error.message}")
+                    },
+                    { /* Session renamed successfully */ }
+                )
+        }
+        Unit
+    }
 }

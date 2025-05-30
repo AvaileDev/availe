@@ -42,6 +42,9 @@ data class SessionListResponse(val sessionIds: List<String>)
 @Serializable
 data class BranchSnapshotResponse(val branches: Map<String, List<InternalMessage>>)
 
+@Serializable
+data class UpdateSessionTitleRequest(val title: String)
+
 fun Route.chatServiceRoutes() = route("/api/chat/sessions") {
 
     get {
@@ -71,6 +74,16 @@ fun Route.chatServiceRoutes() = route("/api/chat/sessions") {
             ChatService.deleteSession(id).fold(
                 { err -> call.respond(err.toStatusCode(), err.toApiError()) },
                 { call.respond(HttpStatusCode.NoContent) }
+            )
+        }
+
+        // Endpoint to update session title
+        put("/title") {
+            val id = call.parameters["sessionId"]!!
+            val req = call.receive<UpdateSessionTitleRequest>()
+            ChatService.updateSessionTitle(id, req.title).fold(
+                { err -> call.respond(err.toStatusCode(), err.toApiError()) },
+                { call.respond(HttpStatusCode.OK, mapOf("message" to "Session title updated")) }
             )
         }
 
