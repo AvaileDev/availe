@@ -15,6 +15,7 @@ import androidx.compose.ui.zIndex
 import coil3.ImageLoader
 import coil3.compose.setSingletonImageLoaderFactory
 import io.availe.components.chat.ChatInputFieldContainer
+import io.availe.components.chat.ChatSidebar
 import io.availe.components.chat.ChatThread
 import io.availe.config.HttpClientProvider
 import io.availe.repositories.KtorChatRepository
@@ -44,6 +45,9 @@ fun App() {
     var uploadedFiles by remember { mutableStateOf(listOf<PlatformFile>()) }
     val snackbarHostState = remember { SnackbarHostState() }
 
+    // Sidebar state
+    var isSidebarExpanded by remember { mutableStateOf(true) }
+
     setSingletonImageLoaderFactory { context ->
         ImageLoader.Builder(context)
             .components {
@@ -70,37 +74,47 @@ fun App() {
                         detectTapGestures { focusManager.clearFocus() }
                     }
             ) {
-                Column(
-                    Modifier
-                        .fillMaxSize()
-                        .padding(vertical = 12.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    ChatThread(
-                        state = listState,
-                        responsiveWidth = responsiveWidth,
+                Row(modifier = Modifier.fillMaxSize()) {
+                    // Chat sidebar
+                    ChatSidebar(
                         viewModel = chatViewModel,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .weight(1f)
+                        isExpanded = isSidebarExpanded,
+                        onToggleExpanded = { isSidebarExpanded = !isSidebarExpanded }
                     )
-                    Spacer(Modifier.height(8.dp))
-                    ChatInputFieldContainer(
-                        modifier = Modifier.fillMaxWidth(responsiveWidth),
-                        textContent = textContent,
-                        onTextChange = { textContent = it },
-                        targetUrl = targetUrl,
-                        onTargetUrlChange = { text, _ -> targetUrl = text },
-                        snackbarHostState = snackbarHostState,
-                        onSend = { message, url ->
-                            chatViewModel.send(message, url)
-                            textContent = ""
-                        },
-                        uploadedFiles = uploadedFiles,
-                        onFileUploaded = { file ->
-                            uploadedFiles = uploadedFiles + file
-                        }
-                    )
+
+                    // Main chat content
+                    Column(
+                        Modifier
+                            .fillMaxSize()
+                            .padding(vertical = 12.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        ChatThread(
+                            state = listState,
+                            responsiveWidth = responsiveWidth,
+                            viewModel = chatViewModel,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .weight(1f)
+                        )
+                        Spacer(Modifier.height(8.dp))
+                        ChatInputFieldContainer(
+                            modifier = Modifier.fillMaxWidth(responsiveWidth),
+                            textContent = textContent,
+                            onTextChange = { textContent = it },
+                            targetUrl = targetUrl,
+                            onTargetUrlChange = { text, _ -> targetUrl = text },
+                            snackbarHostState = snackbarHostState,
+                            onSend = { message, url ->
+                                chatViewModel.send(message, url)
+                                textContent = ""
+                            },
+                            uploadedFiles = uploadedFiles,
+                            onFileUploaded = { file ->
+                                uploadedFiles = uploadedFiles + file
+                            }
+                        )
+                    }
                 }
             }
         }

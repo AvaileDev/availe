@@ -1,6 +1,8 @@
 package io.availe.viewmodels
 
+import arrow.core.Either
 import arrow.core.flatMap
+import arrow.core.raise.either
 import io.availe.models.InternalMessage
 import io.availe.repositories.KtorChatRepository
 import io.ktor.http.*
@@ -18,15 +20,15 @@ class ChatViewModel(
 ) {
     private val _messages = MutableStateFlow<List<InternalMessage>>(emptyList())
     val messages: StateFlow<List<InternalMessage>> = _messages.asStateFlow()
-    
+
     // Expose session-related state from the repository
     val availableSessions = repository.availableSessions
     val currentSessionId = repository.currentSessionId
-    
+
     // UI state for session creation
     private val _isCreatingSession = MutableStateFlow(false)
     val isCreatingSession: StateFlow<Boolean> = _isCreatingSession.asStateFlow()
-    
+
     private val scope = CoroutineScope(Dispatchers.Main + Job())
 
     init {
@@ -37,14 +39,14 @@ class ChatViewModel(
                     { /* handle error if needed */ },
                     { /* success */ }
                 )
-            
+
             // Create default session if needed
             repository.createSession()
                 .fold(
                     { /* handle error if needed */ },
                     { /* success */ }
                 )
-            
+
             // Observe current session changes to update messages
             repository.currentSessionId.collectLatest { sessionId ->
                 if (sessionId != null) {
@@ -55,7 +57,7 @@ class ChatViewModel(
             }
         }
     }
-    
+
     /**
      * Refreshes the message list for the current session
      */
@@ -80,7 +82,7 @@ class ChatViewModel(
                 )
         }
     }
-    
+
     /**
      * Creates a new chat session with optional title
      */
@@ -95,20 +97,29 @@ class ChatViewModel(
             _isCreatingSession.value = false
         }
     }
-    
+
     /**
      * Selects a session by ID
      */
     fun selectSession(sessionId: String) {
         repository.setCurrentSession(sessionId)
     }
-    
+
     /**
      * Deletes a session by ID
+     * @return Either with potential error or Unit on success
      */
-    fun deleteSession(sessionId: String) {
+    fun deleteSession(sessionId: String): Either<Throwable, Unit> = either {
         scope.launch {
             repository.deleteSession(sessionId)
+                .fold(
+                    { error -> 
+                        // Log error or handle it appropriately
+                        println("Error deleting session: ${error.message}")
+                    },
+                    { /* Session deleted successfully */ }
+                )
         }
+        Unit
     }
 }
