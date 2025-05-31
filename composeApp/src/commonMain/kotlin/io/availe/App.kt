@@ -1,14 +1,19 @@
 package io.availe
 
-import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.expandHorizontally
+import androidx.compose.animation.shrinkHorizontally
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
@@ -23,13 +28,14 @@ import io.availe.util.getScreenWidthDp
 import io.availe.viewmodels.ChatViewModel
 import io.github.vinceglb.filekit.PlatformFile
 import io.github.vinceglb.filekit.coil.addPlatformFileSupport
+import io.ktor.http.*
+import kotlinx.coroutines.launch
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable
 @Preview
 fun App() {
     val httpClient = HttpClientProvider.client
-
     val listState = rememberLazyListState()
     val screenWidth: Dp = getScreenWidthDp()
     val responsiveWidth: Float = when {
@@ -41,12 +47,13 @@ fun App() {
     val chatRepository = remember { KtorChatRepository(httpClient) }
     val chatViewModel = remember { ChatViewModel(chatRepository) }
     var targetUrl: String by remember { mutableStateOf("http://localhost:8080/nlip") }
-
     var uploadedFiles by remember { mutableStateOf(listOf<PlatformFile>()) }
     val snackbarHostState = remember { SnackbarHostState() }
-
-    // Sidebar state
-    var isSidebarExpanded by remember { mutableStateOf(true) }
+    val screenWidthDp = getScreenWidthDp()
+    val compact = screenWidthDp < 600.dp
+    val drawerState = rememberDrawerState(DrawerValue.Closed)
+    val scope = rememberCoroutineScope()
+    var isSidebarOpen by remember { mutableStateOf(true) }
 
     setSingletonImageLoaderFactory { context ->
         ImageLoader.Builder(context)
@@ -57,7 +64,6 @@ fun App() {
     }
 
     MaterialTheme(colorScheme = lightColorScheme()) {
-        val focusManager = LocalFocusManager.current
         Scaffold(
             snackbarHost = {
                 SnackbarHost(
@@ -66,40 +72,74 @@ fun App() {
                 )
             }
         ) { innerPadding ->
-            Surface(
-                Modifier
-                    .fillMaxSize()
-                    .padding(innerPadding)
-                    .pointerInput(Unit) {
-                        detectTapGestures { focusManager.clearFocus() }
-                    }
-            ) {
-                Row(modifier = Modifier.fillMaxSize()) {
-                    // Chat sidebar
-                    ChatSidebar(
-                        viewModel = chatViewModel,
-                        isExpanded = isSidebarExpanded,
-                        onToggleExpanded = { isSidebarExpanded = !isSidebarExpanded }
-                    )
+            if (compact) {
+                ModalNavigationDrawer(
+                    drawerState = drawerState,
+                    drawerContent = {
+                        ChatSidebar(
+                            viewModel = chatViewModel,
+                            closeDrawer = { scope.launch { drawerState.close() } }
+                        )
+                    },
+                    scrimColor = Color.Black.copy(alpha = .45f)
+                ) {
+                    Box(modifier = Modifier.fillMaxSize()) {
+                        MainChatArea(
+                            innerPadding = innerPadding,
+                            responsiveWidth = responsiveWidth,
+                            listState = listState,
+                            viewModel = chatViewModel,
+                            textContent = textContent,
+                            onTextChange = { textContent = it },
+                            targetUrl = targetUrl,
+                            onTargetUrlChange = { text, _ -> targetUrl = text },
+                            snackbarHostState = snackbarHostState,
+                            onSend = { message, url ->
+                                chatViewModel.send(message, url)
+                                textContent = ""
+                            },
+                            uploadedFiles = uploadedFiles,
+                            onFileUploaded = { file ->
+                                uploadedFiles = uploadedFiles + file
+                            }
+                        )
 
-                    // Main chat content
-                    Column(
+                        Text(
+                            "≡",
+                            modifier = Modifier
+                                .align(Alignment.TopStart)
+                                .offset(x = 12.dp, y = 12.dp)
+                                .background(MaterialTheme.colorScheme.surfaceVariant, shape = CircleShape)
+                                .padding(horizontal = 14.dp, vertical = 10.dp)
+                                .clickable { scope.launch { drawerState.open() } }
+                                .zIndex(2f)
+                        )
+                    }
+                }
+            } else {
+                Box(modifier = Modifier.fillMaxSize()) {
+                    Row(
                         Modifier
                             .fillMaxSize()
-                            .padding(vertical = 12.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
+                            .padding(innerPadding)
                     ) {
-                        ChatThread(
-                            state = listState,
+                        val sidebarWidth by animateDpAsState(if (isSidebarOpen) 250.dp else 0.dp)
+                        AnimatedVisibility(
+                            visible = sidebarWidth > 0.dp,
+                            enter = expandHorizontally(),
+                            exit = shrinkHorizontally()
+                        ) {
+                            ChatSidebar(
+                                viewModel = chatViewModel,
+                                closeDrawer = { isSidebarOpen = false }
+                            )
+                        }
+
+                        MainChatArea(
+                            innerPadding = innerPadding,
                             responsiveWidth = responsiveWidth,
+                            listState = listState,
                             viewModel = chatViewModel,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .weight(1f)
-                        )
-                        Spacer(Modifier.height(8.dp))
-                        ChatInputFieldContainer(
-                            modifier = Modifier.fillMaxWidth(responsiveWidth),
                             textContent = textContent,
                             onTextChange = { textContent = it },
                             targetUrl = targetUrl,
@@ -115,8 +155,63 @@ fun App() {
                             }
                         )
                     }
+
+                    Text(
+                        if (isSidebarOpen) "<" else ">",
+                        modifier = Modifier
+                            .align(Alignment.TopStart)
+                            .offset(x = if (isSidebarOpen) 250.dp else 0.dp, y = 12.dp)
+                            .clickable { isSidebarOpen = !isSidebarOpen }
+                            .padding(horizontal = 8.dp, vertical = 10.dp)
+                            .zIndex(2f)
+                    )
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun MainChatArea(
+    innerPadding: PaddingValues,
+    responsiveWidth: Float,
+    listState: androidx.compose.foundation.lazy.LazyListState,
+    viewModel: ChatViewModel,
+    textContent: String,
+    onTextChange: (String) -> Unit,
+    targetUrl: String,
+    onTargetUrlChange: (String, Url?) -> Unit,
+    snackbarHostState: SnackbarHostState,
+    onSend: (String, Url) -> Unit,
+    uploadedFiles: List<PlatformFile>,
+    onFileUploaded: (PlatformFile) -> Unit
+) {
+    Column(
+        Modifier
+            .fillMaxSize()
+            .padding(vertical = 12.dp)
+            .padding(innerPadding),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        ChatThread(
+            state = listState,
+            responsiveWidth = responsiveWidth,
+            viewModel = viewModel,
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f)
+        )
+        Spacer(Modifier.height(8.dp))
+        ChatInputFieldContainer(
+            modifier = Modifier.fillMaxWidth(responsiveWidth),
+            textContent = textContent,
+            onTextChange = onTextChange,
+            targetUrl = targetUrl,
+            onTargetUrlChange = onTargetUrlChange,
+            snackbarHostState = snackbarHostState,
+            onSend = onSend,
+            uploadedFiles = uploadedFiles,
+            onFileUploaded = onFileUploaded
+        )
     }
 }

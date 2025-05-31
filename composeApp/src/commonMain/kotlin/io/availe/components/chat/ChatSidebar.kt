@@ -1,9 +1,5 @@
 package io.availe.components.chat
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.expandHorizontally
-import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -13,7 +9,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -23,130 +18,69 @@ import kotlinx.coroutines.launch
 @Composable
 fun ChatSidebar(
     viewModel: ChatViewModel,
-    isExpanded: Boolean,
-    onToggleExpanded: () -> Unit,
-    modifier: Modifier = Modifier
+    closeDrawer: () -> Unit
 ) {
     val availableSessions by viewModel.availableSessions.collectAsState()
     val currentSessionId by viewModel.currentSessionId.collectAsState()
     val isCreatingSession by viewModel.isCreatingSession.collectAsState()
     val coroutineScope = rememberCoroutineScope()
 
-    // Debug logging for sessions
-    LaunchedEffect(availableSessions) {
-        println("ChatSidebar: Available sessions: $availableSessions")
-    }
-
-    val sidebarWidth = 250.dp
-    val collapsedWidth = 48.dp
-
-    val sidebarAlpha by animateFloatAsState(targetValue = if (isExpanded) 1f else 0.8f)
-
-    Row(modifier = modifier.fillMaxHeight()) {
-        AnimatedVisibility(
-            visible = isExpanded,
-            enter = expandHorizontally(),
-            exit = shrinkHorizontally()
+    Column(
+        modifier = Modifier
+            .width(250.dp)
+            .fillMaxHeight()
+            .background(MaterialTheme.colorScheme.surfaceVariant)
+            .padding(8.dp)
+    ) {
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .padding(8.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Box(
-                modifier = Modifier
-                    .width(sidebarWidth)
-                    .fillMaxHeight()
-                    .background(MaterialTheme.colorScheme.surfaceVariant)
-                    .alpha(sidebarAlpha)
-                    .padding(8.dp)
+            Text("Chat Sessions", style = MaterialTheme.typography.titleMedium)
+            Button(
+                onClick = { viewModel.createSession() },
+                enabled = !isCreatingSession
             ) {
-                Column(modifier = Modifier.fillMaxSize()) {
-                    // Header with title and new chat button
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(8.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            "Chat Sessions",
-                            style = MaterialTheme.typography.titleMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-
-                        Button(
-                            onClick = { viewModel.createSession() },
-                            enabled = !isCreatingSession,
-                            modifier = Modifier.padding(start = 8.dp)
-                        ) {
-                            if (isCreatingSession) {
-                                CircularProgressIndicator(
-                                    modifier = Modifier.size(16.dp),
-                                    strokeWidth = 2.dp
-                                )
-                            } else {
-                                Text("New")
-                            }
-                        }
-                    }
-
-                    Divider(color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.2f))
-
-                    // Session list
-                    LazyColumn(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .weight(1f)
-                            .padding(vertical = 8.dp)
-                    ) {
-                        items(availableSessions) { sessionId ->
-                            SessionItem(
-                                sessionId = sessionId,
-                                isSelected = sessionId == currentSessionId,
-                                onSessionSelected = { viewModel.selectSession(sessionId) },
-                                onSessionDeleted = {
-                                    coroutineScope.launch {
-                                        viewModel.deleteSession(sessionId)
-                                            .fold(
-                                                { error ->
-                                                    // Handle error (could show a snackbar or other UI feedback)
-                                                    println("Error deleting session: ${error.message}")
-                                                },
-                                                { /* Session deleted successfully */ }
-                                            )
-                                    }
-                                },
-                                onSessionRenamed = { newTitle ->
-                                    coroutineScope.launch {
-                                        viewModel.renameSession(sessionId, newTitle)
-                                            .fold(
-                                                { error ->
-                                                    // Handle error (could show a snackbar or other UI feedback)
-                                                    println("Error renaming session: ${error.message}")
-                                                },
-                                                { /* Session renamed successfully */ }
-                                            )
-                                    }
-                                }
-                            )
-                        }
-                    }
+                if (isCreatingSession) {
+                    CircularProgressIndicator(
+                        Modifier.size(16.dp),
+                        strokeWidth = 2.dp
+                    )
+                } else {
+                    Text("New")
                 }
             }
         }
-
-        // Collapse/expand button
-        Box(
+        Divider(color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.2f))
+        LazyColumn(
             modifier = Modifier
-                .width(collapsedWidth)
-                .fillMaxHeight()
-                .background(MaterialTheme.colorScheme.surfaceVariant)
-                .clickable { onToggleExpanded() }
-                .padding(8.dp),
-            contentAlignment = Alignment.Center
+                .fillMaxWidth()
+                .weight(1f)
+                .padding(vertical = 8.dp)
         ) {
-            Text(
-                text = if (isExpanded) "<" else ">",
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                style = MaterialTheme.typography.titleMedium
-            )
+            items(availableSessions) { sessionId ->
+                SessionItem(
+                    sessionId = sessionId,
+                    isSelected = sessionId == currentSessionId,
+                    onSessionSelected = {
+                        viewModel.selectSession(sessionId)
+                        closeDrawer()
+                    },
+                    onSessionDeleted = {
+                        coroutineScope.launch {
+                            viewModel.deleteSession(sessionId).fold({}, {})
+                        }
+                    },
+                    onSessionRenamed = { newTitle: String ->
+                        coroutineScope.launch {
+                            viewModel.renameSession(sessionId, newTitle).fold({}, {})
+                        }
+                    }
+                )
+            }
         }
     }
 }
@@ -190,8 +124,6 @@ private fun SessionItem(
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier.weight(1f)
         )
-
-        // Rename button
         TextButton(
             onClick = {
                 newTitle = ""
@@ -204,8 +136,6 @@ private fun SessionItem(
         ) {
             Text("Rename", style = MaterialTheme.typography.bodySmall)
         }
-
-        // Delete button
         TextButton(
             onClick = { showDeleteConfirmation = true },
             modifier = Modifier.padding(start = 4.dp),
@@ -243,7 +173,6 @@ private fun SessionItem(
         )
     }
 
-    // Rename dialog
     if (showRenameDialog) {
         AlertDialog(
             onDismissRequest = { showRenameDialog = false },
