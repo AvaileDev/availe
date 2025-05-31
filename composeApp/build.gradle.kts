@@ -78,7 +78,7 @@ kotlin {
             implementation(libs.filekit.dialogs.compose)
             implementation(libs.filekit.coil)
             implementation(libs.coil.compose)
-            implementation(libs.arrow.kt.arrow.core)
+            implementation(libs.arrow.core)
             implementation(libs.arrow.fx.coroutines)
         }
         desktopMain.dependencies {
